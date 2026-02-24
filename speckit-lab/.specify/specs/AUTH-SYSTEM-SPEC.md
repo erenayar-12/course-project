@@ -51,19 +51,32 @@ This specification defines the complete implementation of a secure user authenti
 
 **Login Sequence:**
 1. User navigates to `/login`
-2. React component redirects to Auth0 login page
-3. Auth0 validates credentials against SAML provider
-4. Auth0 returns authorization token to callback URL
-5. Backend exchanges token for JWT
-6. JWT stored in HTTP-only Secure cookie
-7. User redirected to dashboard
+2. Rate limiter checks max 5 attempts per 15 minutes
+3. React component redirects to Auth0 login page
+4. Auth0 validates credentials against SAML provider (EPAM)
+5. SAML provider authenticates and returns attributes
+6. Auth0 applies role assignment rules based on SAML groups
+7. Auth0 returns authorization token to callback URL
+8. Backend validates CSRF state parameter and exchanges token
+9. Backend creates/updates user in database with role from Auth0
+10. Backend generates JWT with userId, email, role claims (30-min expiry)
+11. JWT stored in HTTP-only Secure cookie with SameSite=Strict
+12. Session record created tracking device info and IP
+13. User redirected to dashboard
 
 **Request with Authentication:**
 1. Browser includes JWT cookie with each request
 2. Express middleware validates JWT signature
-3. Middleware decodes claims (userId, role)
-4. Middleware attaches user context to request
-5. Route handler processes authenticated request
+3. Middleware checks token revocation list (Redis)
+4. Middleware refreshes role from database every 5 minutes
+5. Middleware decodes claims (userId, role)
+6. Middleware attaches user context to request
+7. Route handler processes authenticated request
+
+**Error Handling with Graceful Degradation:**
+- If SAML provider down: Circuit breaker engages after 5 failures
+- If circuit breaker open: User sees "Service temporarily unavailable"
+- Phase 2: Emergency fallback to local DB verification (if enabled)
 
 ---
 
@@ -277,11 +290,14 @@ interface User {
 
 #### POST /api/auth/logout
 
-**Purpose:** Invalidate user session
+**Purpose:** Invalidate user session (hybrid synchronous + asynchronous approach)
 
 ```typescript
 /**
  * Logout - Invalidates user session and clears authentication token
+ * 
+ * Synchronous: Clears cookie immediately (user sees logout success)
+ * Asynchronous: Revokes token in background (prevents token reuse)
  * 
  * @route POST /api/auth/logout
  * @authentication Required - JWT cookie
@@ -290,18 +306,73 @@ interface User {
  * 
  * @example
  * POST /api/auth/logout
- * → { "success": true }
+ * → { "success": true } (returns immediately, ~5ms)
+ * Background: Token added to revocation list, session deleted
  */
 router.post('/logout', authMiddleware, async (req: AuthRequest, res: AuthResponse) => {
-  // Clear JWT cookie (set max-age: 0)
-  // Optionally: Add token to revocation list
-  // Return success response
+  const userId = req.user.id;
+  const token = req.cookies.jwt;
+  
+  try {
+    // Synchronous: Clear JWT cookie immediately
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+    });
+    
+    // Return success immediately (non-blocking)
+    res.json({ success: true, message: 'Logged out successfully' });
+    
+    // Asynchronous: Revoke token in background (no await)
+    revokeTokenAsync(userId, token).catch(err => {
+      logger.error('Failed to revoke token', { userId, err });
+      // Send to DLQ for retry
+      messageQueue.send('failed-revocations', { userId, token });
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Logout failed' });
+  }
 })
+
+/**
+ * Async token revocation (non-blocking)
+ * 
+ * @private
+ * @param {string} userId - User who is logging out
+ * @param {string} token - JWT token to revoke
+ * @throws {Error} If revocation fails completely
+ */
+async function revokeTokenAsync(userId: string, token: string): Promise<void> {
+  // Set revocation flag in Redis with TTL = token expiry (30 min)
+  await redis.setex(`revoked:${token}`, 30 * 60, JSON.stringify({
+    revokedAt: new Date(),
+    userId,
+  }));
+  
+  // Delete session record from database
+  await db.session.deleteMany({
+    where: { token },
+  });
+  
+  // Log audit event
+  await db.auditLog.create({
+    data: {
+      userId,
+      eventType: 'LOGOUT',
+      details: 'User logged out',
+      ipAddress: getClientIP(),
+    },
+  });
+}
 ```
 
-**Implementation:**
-- Clear cookie by setting `Set-Cookie: jwt=; Max-Age=0; HttpOnly; Secure; Path=/`
-- Optional: Add JWT to Redis revocation set (for immediate invalidation)
+**Implementation Details:**
+- **Synchronous:** Clear cookie immediately with `Set-Cookie: jwt=; Max-Age=0; HttpOnly; Secure; Path=/`
+- **Asynchronous:** Add JWT to Redis revocation set (TTL 30 min) for immediate invalidation
+- **Database:** Delete all sessions for this token
+- **Audit:** Log logout event with timestamp and IP address
+- **Performance:** Response returns in ~5ms, revocation happens in background
 
 ---
 
@@ -316,6 +387,7 @@ router.post('/logout', authMiddleware, async (req: AuthRequest, res: AuthRespons
  * Authentication middleware - Validates JWT and attaches user context
  * 
  * Validates JWT signature and expiration. Rejects requests with invalid or expired tokens.
+ * Checks token revocation list. Refreshes role claims every 5 minutes from database.
  * Attaches decoded user information to `req.user`.
  * 
  * @middleware
@@ -323,16 +395,16 @@ router.post('/logout', authMiddleware, async (req: AuthRequest, res: AuthRespons
  * @param {Response} res - Express response
  * @param {NextFunction} next - Next middleware in chain
  * 
- * @throws {AuthenticationError} 401 - No valid JWT, invalid signature, or expired
+ * @throws {AuthenticationError} 401 - No valid JWT, invalid signature, expired, or revoked
  * 
  * @example
  * app.use('/api/protected', authMiddleware);
  */
-export const authMiddleware = (
+export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const token: string = req.cookies.jwt;
     
@@ -340,11 +412,48 @@ export const authMiddleware = (
       throw new AuthenticationError('No authentication token provided', 401);
     }
     
+    // Check token revocation list (Phase 1: immediate logout support)
+    const isRevoked = await redis.get(`revoked:${token}`);
+    if (isRevoked) {
+      throw new AuthenticationError('Token has been revoked', 401);
+    }
+    
     const decoded: DecodedToken = jwt.verify(
       token,
       process.env.JWT_SECRET!,
       { algorithms: ['HS256'] }
     );
+    
+    // Refresh role from database every 5 minutes
+    const now = Math.floor(Date.now() / 1000);
+    if (now - decoded.roleCheckedAt > 5 * 60) {
+      const freshUser = await db.user.findUnique({
+        where: { id: decoded.userId },
+      });
+      
+      if (freshUser?.role !== decoded.role) {
+        // Role changed - update JWT cookie
+        const newToken = jwt.sign(
+          {
+            userId: freshUser.id,
+            email: freshUser.email,
+            role: freshUser.role,
+            roleCheckedAt: now,
+          },
+          process.env.JWT_SECRET!,
+          { expiresIn: '30m' }
+        );
+        
+        res.cookie('jwt', newToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 30 * 60 * 1000,
+        });
+        
+        decoded.role = freshUser.role;
+      }
+    }
     
     req.user = {
       id: decoded.userId,
@@ -484,6 +593,48 @@ enum Role {
 
 ---
 
+#### Session Table (MVP: Track only | Phase 2: Enforce single session)
+
+**File:** `prisma/schema.prisma`
+
+```prisma
+/**
+ * Session model for tracking active user sessions
+ * 
+ * MVP: Track all active sessions per user (no restrictions)
+ * Phase 2: Enforce single session per user (optional)
+ */
+model Session {
+  /// Unique session identifier
+  id String @id @default(uuid())
+  
+  /// User associated with this session
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  /// JWT token for this session
+  token String @unique
+  
+  /// Device information (browser, OS, device type)
+  deviceInfo String?
+  
+  /// IP address of session
+  ipAddress String?
+  
+  /// When session was created
+  createdAt DateTime @default(now()) @db.Timestamp()
+  
+  /// Last activity timestamp (updated with each request)
+  lastActivityAt DateTime @updatedAt @db.Timestamp()
+  
+  /// When token expires (30 minutes from creation)
+  expiresAt DateTime @db.Timestamp()
+  
+  @@index([userId])
+  @@index([expiresAt])
+}
+```
+
 #### Audit Log Table
 
 **File:** `prisma/schema.prisma`
@@ -578,6 +729,9 @@ const token = jwt.sign(
  * Prevents XSS attacks by making cookie inaccessible to JavaScript.
  * Prevents CSRF by sending only on same-site requests.
  * Prevents MITM by enforcing HTTPS.
+ * 
+ * Session Timeout: 30 minutes of inactivity (MVP default)
+ * Absolute Session: 12 hours maximum (Phase 2)
  */
 res.cookie('jwt', token, {
   httpOnly: true,      // Not accessible via document.cookie
@@ -585,7 +739,7 @@ res.cookie('jwt', token, {
   sameSite: 'strict',  // Only sent with same-site requests
   domain: '.epam.com', // Only sent to EPAM domain
   path: '/',           // Sent with all requests
-  maxAge: 15 * 60 * 1000, // 15 minutes
+  maxAge: 30 * 60 * 1000, // 30 minutes (MVP inactivity timeout)
 });
 ```
 
@@ -738,25 +892,92 @@ const auth0Provider = new Auth0Provider({
 ```typescript
 // auth.middleware.test.ts
 describe('authMiddleware', () => {
-  test('should validate valid JWT token', () => {
-    const validToken = jwt.sign({ userId: '123', role: 'Submitter' }, SECRET);
+  test('should validate valid JWT token', async () => {
+    const validToken = jwt.sign({ userId: '123', role: 'Submitter', roleCheckedAt: now }, SECRET);
     const req = { cookies: { jwt: validToken } };
-    authMiddleware(req, res, next);
+    await authMiddleware(req, res, next);
     expect(req.user).toBeDefined();
     expect(next).toHaveBeenCalled();
   });
   
-  test('should reject expired token', () => {
+  test('should reject expired token', async () => {
     const expiredToken = jwt.sign({ userId: '123' }, SECRET, { expiresIn: '-1h' });
     const req = { cookies: { jwt: expiredToken } };
-    authMiddleware(req, res, next);
+    await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
   });
   
-  test('should reject missing token', () => {
+  test('should reject missing token', async () => {
     const req = { cookies: {} };
-    authMiddleware(req, res, next);
+    await authMiddleware(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
+  });
+  
+  test('should reject revoked token', async () => {
+    const validToken = jwt.sign({ userId: '123', role: 'Submitter', roleCheckedAt: now }, SECRET);
+    await redis.set(`revoked:${validToken}`, 'revoked');
+    const req = { cookies: { jwt: validToken } };
+    await authMiddleware(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+  });
+  
+  test('should refresh role if changed in database', async () => {
+    const validToken = jwt.sign({ userId: '123', role: 'Submitter', roleCheckedAt: now - 6*60 }, SECRET);
+    const req = { cookies: { jwt: validToken } };
+    const mockUser = { id: '123', email: 'test@epam.com', role: 'Evaluator' };
+    jest.spyOn(db.user, 'findUnique').mockResolvedValue(mockUser);
+    
+    await authMiddleware(req, res, next);
+    
+    expect(req.user.role).toBe('Evaluator');
+    expect(res.cookie).toHaveBeenCalled();
+  });
+});
+
+// auth.logout.test.ts
+describe('POST /auth/logout', () => {
+  test('should return success immediately without waiting for revocation', async () => {
+    const response = await request(app)
+      .post('/api/auth/logout')
+      .set('Cookie', `jwt=${validToken}`);
+    
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    // Note: revocation happens in background
+  });
+  
+  test('should clear JWT cookie', async () => {
+    await request(app)
+      .post('/api/auth/logout')
+      .set('Cookie', `jwt=${validToken}`);
+    
+    // Cookie should be cleared
+    const response = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', `jwt=`); // Empty cookie
+    
+    expect(response.status).toBe(401);
+  });
+});
+
+// rate-limiter.test.ts
+describe('Login Rate Limiter', () => {
+  test('should allow up to 5 login attempts per 15 minutes', async () => {
+    for (let i = 0; i < 5; i++) {
+      const response = await request(app).post('/api/auth/callback')
+        .send({ code: 'invalid', state: 'valid' });
+      expect(response.status).not.toBe(429); // Too Many Requests
+    }
+  });
+  
+  test('should reject 6th login attempt with 429', async () => {
+    for (let i = 0; i < 6; i++) {
+      const response = await request(app).post('/api/auth/callback')
+        .send({ code: 'invalid', state: 'valid' });
+      if (i === 5) {
+        expect(response.status).toBe(429);
+      }
+    }
   });
 });
 ```
@@ -800,29 +1021,41 @@ test('Complete user authentication journey', async ({ page }) => {
 
 | Metric | Target | Justification |
 |--------|--------|---|
-| Login response time | <500ms | SAML round-trip to Auth0 |
+| Login response time | <500ms | SAML round-trip to Auth0 (includes rate limit check) |
 | Token validation | <10ms | JWT signature verification |
+| Role refresh check | <50ms | Database lookup every 5 min (cached during window) |
 | GET /auth/me | <50ms | Database lookup + JWT decode |
-| Token refresh | <200ms | If refresh tokens implemented |
+| Logout response | <5ms | Synchronous (async revocation in background) |
+| Token revocation | <100ms | Redis write for revocation list |
 
 ---
 
 ## 9. Production Deployment Checklist
 
-- [ ] Auth0 SAML provider configured with EPAM domain
+- [ ] Auth0 SAML provider configured with EPAM domain (custom rules for role assignment)
+- [ ] SAML attribute mappings configured (email, name, groups)
 - [ ] JWT_SECRET stored in secure vault (not in .env)
+- [ ] Redis configured for token revocation list
+- [ ] Circuit breaker configured (5 fails → open, 1 min → half-open)
 - [ ] HTTPS enforced (all auth routes require HTTPS)
-- [ ] Secure cookie flags verified (HttpOnly, Secure, SameSite)
-- [ ] Rate limiting on login attempts (e.g., 5 attempts/min)
+- [ ] Secure cookie flags verified (HttpOnly=true, Secure=true, SameSite=strict)
+- [ ] Rate limiting on login endpoint (5 attempts per 15 min per email)
+- [ ] Role refresh cache configured (every 5 minutes)
+- [ ] Session table indexed on userId and expiresAt
+- [ ] Token revocation list TTL set to 30 min (match token expiry)
 - [ ] Monitoring and alerting for authentication failures
 - [ ] Audit logs exported to security monitoring system
 - [ ] Security headers configured (CSP, HSTS, X-Frame-Options)
 - [ ] OAuth token endpoint protected with client credentials
-- [ ] Session timeout tested and verified (30 min default)
+- [ ] Session timeout tested and verified (30 min inactivity)
+- [ ] Logout performance tested (<5ms synchronous response)
+- [ ] Concurrent session tracking verified (for Phase 2 single-session mode)
+- [ ] Emergency fallback authentication disabled in production
+- [ ] Load testing: 100 concurrent logins at peak time
 
 ---
 
-## 10. Reference Implementation
+## 10. Reference Implementation & Design Decisions
 
 **Repository:** `D:\labs\course-project\`
 
@@ -830,9 +1063,25 @@ test('Complete user authentication journey', async ({ page }) => {
 - EPIC-1: [auth-screen/specs/epics/EPIC-1-User-Authentication.md](../../../auth-screen/specs/epics/EPIC-1-User-Authentication.md)
 - User Stories: [auth-screen/specs/stories/](../../../auth-screen/specs/stories/)
 - Constitution: [.specify/memory/constitution.md](./constitution.md)
+- **Design Clarifications:** [.specify/docs/AUTH-CLARIFY-001.md](../docs/AUTH-CLARIFY-001.md) ✅ **ALL CLARIFICATIONS ACCEPTED**
+
+### Design Decisions Summary
+
+All 7 key design clarifications have been incorporated into this specification:
+
+✅ **Auth0 SAML Configuration** - Custom role assignment rules based on SAML groups  
+✅ **SAML Outage Handling** - Circuit breaker + Phase 2 fallback  
+✅ **Rate Limiting** - Hybrid (Auth0 + API layer at 5/15min)  
+✅ **Session Timeout** - 30 minutes inactivity (MVP fixed timeout)  
+✅ **Concurrent Logins** - No restrictions (tracked for Phase 2)  
+✅ **Role Changes** - Refresh on next API request (non-disruptive)  
+✅ **Logout** - Hybrid synchronous response + async revocation  
+
+See [AUTH-CLARIFY-001.md](../docs/AUTH-CLARIFY-001.md) for detailed rationale on each decision.
 
 ---
 
 **Specification Version:** 1.0  
+**Status:** ✅ APPROVED (All clarifications accepted)
 **Last Updated:** February 24, 2026  
-**Status:** Ready for Development
+**Constitution Alignment:** ✅ TypeScript Strict | Testing Pyramid (80% coverage) | JSDoc Required
