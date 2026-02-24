@@ -1719,7 +1719,537 @@ jobs:
 
 ---
 
-## Integration & Enforcement
+## Section 14: Tools & Frameworks (Tech Stack Implementation)
+
+This section specifies the EXACT tools, versions, and configurations required for all projects in Speckit-Lab to ensure consistency and compatibility.
+
+### Static Analysis & Type Checking
+
+**TypeScript (Mandatory for All Projects)**
+```json
+// tsconfig.json (identical for frontend & backend)
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+- **Command:** `npm run type-check` → `tsc --noEmit`
+- **CI/CD Gate:** Must pass before any other checks
+
+**ESLint (Linting)**
+- **Version:** ESLint 8.x with TypeScript support
+- **Config:** `.eslintrc.json` with TypeScript parser
+- **Plugins:** `@typescript-eslint/eslint-plugin`, `eslint-plugin-react` (frontend only)
+- **Command:** `npm run lint` → `eslint src --max-warnings 0`
+- **Requirement:** ZERO warnings allowed; warnings treated as errors
+
+**Prettier (Code Formatting)**
+- **Version:** Prettier 3.x
+- **Config:** `.prettierrc.json` (non-negotiable, no overrides)
+- **Command:** `npm run format` → `prettier --write src`
+- **Check:** `npm run format:check` → `prettier --check src`
+- **Integration:** Pre-commit hook runs `npm run format`
+
+---
+
+### Testing Frameworks & Libraries
+
+**Unit & Integration Testing: Jest**
+- **Version:** Jest 29.x
+- **TypeScript Support:** `ts-jest` 29.x
+- **Config:** `jest.config.ts` (TypeScript configuration file, not .js)
+- **Coverage thresholds in config:**
+  ```json
+  {
+    "collectCoverageFrom": ["src/**/*.ts", "!src/**/*.d.ts"],
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+  ```
+
+**Testing Libraries (By Platform):**
+
+| Layer | Frontend | Backend |
+|-------|----------|---------|
+| **Rendering/Runtime** | React Testing Library 14.x | Jest + Node.js |
+| **Assertions** | Jest matchers | Jest matchers |
+| **Mocking** | jest.mock(), jest-mock-extended | jest.mock(), jest-mock-extended |
+| **HTTP Testing** | MSW (Mock Service Worker) | supertest 6.x |
+| **Database** | N/A | Prisma + test fixtures |
+
+**Frontend Testing Stack:**
+```json
+{
+  "devDependencies": {
+    "jest": "^29.x",
+    "@testing-library/react": "^14.x",
+    "@testing-library/jest-dom": "^6.x",
+    "ts-jest": "^29.x"
+  }
+}
+```
+
+**Backend Testing Stack:**
+```json
+{
+  "devDependencies": {
+    "jest": "^29.x",
+    "@types/jest": "^29.x",
+    "ts-jest": "^29.x",
+    "supertest": "^6.x",
+    "@types/supertest": "^2.x",
+    "jest-mock-extended": "^3.x"
+  }
+}
+```
+
+**Commands:**
+- `npm test` → Run all tests (unit + integration)
+- `npm run test:watch` → Watch mode during development
+- `npm run test:unit` → Unit tests only
+- `npm run test:integration` → Integration tests only
+- `npm run test:coverage` → Generate coverage report
+- `npm run test:coverage:report` → Coverage report + HTML view
+
+---
+
+### E2E Testing (Phase 2+)
+
+**Primary Framework: Playwright**
+- **Version:** Playwright 1.40.x (when ready for Phase 2)
+- **Languages:** TypeScript end-to-end
+- **Command:** `npm run test:e2e` → `playwright test`
+- **Use case:** Critical user workflows (auth, submission, evaluation)
+
+**Alternative: Stagehand (AI-Native Browser Automation)**
+- **Version:** TBD (optional, emerging tool)
+- **Use case:** Complex UI interactions with AI assistance
+- **Consideration:** Evaluate in Phase 2 after initial E2E framework is stable
+
+**Current Phase 1 Approach:**
+- Use Jest + supertest for backend integration tests
+- Use Jest + React Testing Library for component integration
+- Defer end-to-end with Playwright to Phase 2
+- No E2E tests required for MVP authentication
+
+---
+
+### Coverage & Quality Metrics
+
+**Coverage Tool: Jest Coverage**
+- **Report format:** LCOV (for Codecov integration)
+- **HTML report:** `coverage/lcov-report/index.html`
+- **Minimum targets:**
+  - Line coverage: 80%
+  - Branch coverage: 75%
+  - Function coverage: 80%
+  - Statement coverage: 80%
+
+**Mutation Testing: Stryker**
+- **Version:** @stryker-mutator/core 7.x
+- **Mutator:** typescript-checker for TypeScript files
+- **Minimum score:** 75% (survived mutations < 25%)
+- **Config:** `stryker.conf.json`
+- **Command:** `npm run mutation:test` → `stryker run`
+- **CI/CD:** Runs on main branch only (after all other tests pass)
+
+**Stryker Configuration:**
+```json
+{
+  "testRunner": "jest",
+  "testFramework": "jest",
+  "coverageAnalysis": "perTest",
+  "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.integration.test.ts"],
+  "mutationScore": 75,
+  "timeoutMS": 10000,
+  "plugins": ["@stryker-mutator/typescript-checker"]
+}
+```
+
+---
+
+### Package Manager & Dependencies
+
+**Primary: npm**
+- **Version:** npm 10.x (included with Node.js 18+)
+- **Install:** `npm ci` (clean install in CI/CD)
+- **Lock file:** `package-lock.json` (committed to git)
+- **Security:** `npm audit` (zero high/critical vulnerabilities)
+
+**Dependency Management:**
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend:** Express.js, Prisma, PostgreSQL driver
+- **Shared:** TypeScript, ESLint, Prettier, Jest
+
+**Version Pinning:**
+- Lock major versions in `package.json` (e.g., `"react": "^18.0.0"`)
+- Weekly dependency updates via Dependabot
+- Monthly major version review
+
+---
+
+### Pre-Commit Hooks (husky + lint-staged)
+
+**Configuration (`.husky/pre-commit`):**
+```bash
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm run type-check  # TypeScript strict mode
+npm run lint        # ESLint (zero warnings)
+npm run format      # Prettier auto-format
+npm run test:unit   # Unit tests only (fast)
+```
+
+**Dependencies:**
+```json
+{
+  "devDependencies": {
+    "husky": "^8.x",
+    "lint-staged": "^15.x"
+  }
+}
+```
+
+**Benefits:**
+- Catches errors before commit
+- Prevents broken code from reaching repository
+- Enforces constitution compliance locally
+- Developers can't bypass (prevents lazy commits)
+
+---
+
+### CI/CD Pipeline (GitHub Actions)
+
+**Trigger:** On every push and pull request to any branch
+
+**Sequential Pipeline:**
+```yaml
+Stage 1: Type Safety
+  - npm run type-check (TypeScript strict)
+  - Exit if fails ❌
+
+Stage 2: Code Quality
+  - npm run lint (ESLint)
+  - npm run format:check (Prettier)
+  - Exit if fails ❌
+
+Stage 3: Database Setup (Integration Tests)
+  - Start PostgreSQL 15 service container
+  - Start Redis 7 service container
+  - npx prisma migrate deploy (test database)
+  - Exit if fails ❌
+
+Stage 4: Testing
+  - npm run test:unit --coverage (Unit tests + coverage report)
+  - npm run test:integration (Integration tests)
+  - Verify 80% line coverage minimum
+  - Exit if fails ❌
+
+Stage 5: Security
+  - npm audit (block high/critical vulnerabilities)
+  - Exit if fails ❌
+
+Stage 6: Mutation Testing (Main Branch Only)
+  - npm run mutation:test
+  - Verify 75% mutation score minimum
+  - Exit if fails ❌
+
+Stage 7: Reporting
+  - Upload coverage to Codecov
+  - Post PR comment with coverage delta
+  - Archive mutation report artifacts
+  - Exit if fails ❌
+```
+
+**Complete GitHub Actions Workflow:**
+```yaml
+name: Comprehensive Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: epam_innovation_db_test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      # Stage 1: Type Safety
+      - name: Type Check
+        run: npm run type-check
+      
+      # Stage 2: Code Quality
+      - name: Lint
+        run: npm run lint
+      
+      - name: Format Check
+        run: npm run format:check
+      
+      # Stage 3: Database Setup
+      - name: Database Migration
+        run: npm run db:migrate:test
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:test@localhost:5432/epam_innovation_db_test
+      
+      # Stage 4: Testing
+      - name: Unit Tests with Coverage
+        run: npm run test:unit --coverage
+        env:
+          NODE_ENV: test
+          TEST_DATABASE_URL: postgresql://postgres:test@localhost:5432/epam_innovation_db_test
+          REDIS_URL: redis://localhost:6379
+      
+      - name: Integration Tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+          TEST_DATABASE_URL: postgresql://postgres:test@localhost:5432/epam_innovation_db_test
+          REDIS_URL: redis://localhost:6379
+      
+      - name: Verify Coverage (80% Minimum)
+        run: |
+          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "Coverage $COVERAGE% below 80% minimum"
+            exit 1
+          fi
+      
+      # Stage 5: Security
+      - name: Security Audit
+        run: npm audit --audit-level=moderate
+      
+      # Stage 6: Mutation Testing (Main Branch Only)
+      - name: Mutation Testing
+        if: github.ref == 'refs/heads/main'
+        run: npm run mutation:test
+      
+      # Stage 7: Reporting
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: true
+      
+      - name: Archive Mutation Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mutation-report
+          path: reports/mutation/
+```
+
+---
+
+### Complete npm Scripts Reference
+
+```json
+{
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:unit": "jest --testPathPattern=\\.test\\.ts$ --testPathPattern=\\.test\\.tsx$",
+    "test:integration": "jest --testPathPattern=\\.integration\\.test\\.ts$",
+    "test:e2e": "playwright test",
+    "test:coverage": "jest --coverage",
+    "test:coverage:report": "jest --coverage && node -e \"require('child_process').exec('open coverage/lcov-report/index.html')\"",
+    "mutation:test": "stryker run",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:test": "DATABASE_URL=postgresql://postgres:test@localhost:5432/epam_innovation_db_test npx prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "ci": "npm run type-check && npm run lint && npm run test:coverage && npm run mutation:test"
+  }
+}
+```
+
+---
+
+### Quality Gate Summary (Non-Negotiable Order)
+
+All of these MUST pass, IN THIS ORDER, before code merges:
+
+```
+✅ STAGE 1: Type Safety
+   └─ npm run type-check (tsc --noEmit)
+
+✅ STAGE 2: Code Quality
+   └─ npm run lint
+   └─ npm run format:check
+
+✅ STAGE 3: Database Setup (Integration Tests)
+   └─ Migrate schema to test database
+
+✅ STAGE 4: Testing
+   └─ npm run test:unit --coverage (80% line minimum)
+   └─ npm run test:integration (all passing)
+
+✅ STAGE 5: Security
+   └─ npm audit --audit-level=moderate
+
+✅ STAGE 6: Mutation Testing (Main Branch Only)
+   └─ stryker run (75% score minimum)
+
+✅ STAGE 7: Reporting
+   └─ Coverage uploaded to Codecov
+   └─ PR comment with metrics
+
+If ANY stage fails → PR blocked from merge
+All stages must pass 100% → PR approved for merge
+```
+
+---
+
+### Environment Configuration
+
+**Development Environment (.env.local):**
+```bash
+NODE_ENV=development
+DATABASE_URL=postgresql://user:password@localhost:5432/epam_innovation_db
+REDIS_URL=redis://localhost:6379
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your_client_id
+AUTH0_CLIENT_SECRET=your_client_secret
+JWT_SECRET=your-secret-key-256-bits-minimum
+LOG_LEVEL=debug
+```
+
+**Test Environment (.env.test):**
+```bash
+NODE_ENV=test
+TEST_DATABASE_URL=postgresql://postgres:test@localhost:5432/epam_innovation_db_test
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=test-secret-key
+LOG_LEVEL=error
+```
+
+**Production Environment (Secrets Manager):**
+- Use GitHub Actions secrets vault
+- Never commit `.env.production`
+- Use environment-specific secret management
+
+---
+
+### Troubleshooting & Common Issues
+
+**TypeScript Compilation Fails:**
+```bash
+npm run type-check
+# Check for 'any' types: grep -r "any" src/
+# Run: npm run lint:fix
+```
+
+**Coverage Below 80%:**
+```bash
+npm run test:coverage:report
+# Open coverage/lcov-report/index.html
+# Identify uncovered lines and add tests
+```
+
+**Mutation Score Below 75%:**
+```bash
+npm run mutation:test
+# Review killed vs. survived mutations
+# Add assertions for edge cases
+# See: reports/mutation/html/index.html
+```
+
+**Flaky Tests in CI/CD:**
+- Run locally: `npm run test:integration`
+- Use fake timers: `jest.useFakeTimers()`
+- Mock external APIs: `jest.mock()`
+- Increase timeout if data-dependent: `jest.setTimeout(10000)`
+
+**Prettier vs. ESLint Conflicts:**
+```bash
+npm install --save-dev eslint-config-prettier
+# Add to .eslintrc.json: "prettier" in extends array (last)
+npm run lint:fix && npm run format
+```
+
+---
+
+## Summary: Tools & Frameworks Matrix
+
+| Category | Tool | Version | Command | Minimum |
+|----------|------|---------|---------|---------|
+| **Type Check** | TypeScript | 5.x | `npm run type-check` | Strict mode |
+| **Lint** | ESLint | 8.x | `npm run lint` | 0 warnings |
+| **Format** | Prettier | 3.x | `npm run format` | 100% compliant |
+| **Unit Tests** | Jest | 29.x | `npm run test:unit` | 80% coverage |
+| **Integration Tests** | Jest + supertest | 29.x / 6.x | `npm run test:integration` | All passing |
+| **E2E Tests** | Playwright | 1.40.x | `npm run test:e2e` | Critical paths |
+| **Coverage** | Jest Coverage | 29.x | `npm run test:coverage` | 80% line |
+| **Mutation** | Stryker | 7.x | `npm run mutation:test` | 75% score |
+| **Package Mgr** | npm | 10.x | `npm ci` | Lock file |
+| **Pre-Commit** | husky | 8.x | Auto hook | No bypass |
+
+---
+
+**Tools & Frameworks Section Ratified:** February 24, 2026  
+**Tech Stack:** React 18 + Node.js 18+ + TypeScript 5.x + Jest 29.x  
+**Constitution Compliance:** ✅ All standards enforced in CI/CD pipeline  
+**Automation:** ✅ Pre-commit hooks + GitHub Actions gates
+
 
 These 8 Testing Principles are **MANDATORY** for all code merged to main branch.
 
@@ -1767,11 +2297,16 @@ All of these must pass before code merges:
 
 ## Governance
 
-- **Constitution supersedes all other practices:** If conflict, constitution wins
+- **Constitution (14 sections) supersedes all other practices:** If conflict, constitution wins
+- **Tools & Frameworks (Section 14) are mandatory:** Tech stack, versions, and CI/CD gates non-negotiable
 - **Amendments:** Changes require team discussion and documentation
 - **Violations:** Code review must flag any deviations before merge
 - **Ratification:** All team members acknowledge and commit to these principles
 
 ---
 
-**Version:** 1.0 | **Ratified:** February 24, 2026 | **Last Amended:** February 24, 2026
+**Version:** 1.0 | **Ratified:** February 24, 2026 | **Last Amended:** February 24, 2026  
+**Constitution Sections:** 14 (7 Testing Principles + 7 Implementation Sections + Tools & Frameworks)  
+**Coverage Target:** 80% line, 75% branch, 75% mutation score  
+**Pre-Commit Hooks:** type-check → lint → format → unit tests  
+**CI/CD Stages:** 7 (Type Safety → Quality → Database → Testing → Security → Mutation → Reporting)
