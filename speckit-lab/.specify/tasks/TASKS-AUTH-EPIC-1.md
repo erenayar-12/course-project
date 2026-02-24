@@ -415,6 +415,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Implement React Context for global auth state management
 
+**File Location:** `src/context/__tests__/AuthContext.test.tsx` (per Section 3: Frontend `src/services/__tests__/service.test.ts`)
+
 **Deliverables:**
 - [ ] `src/context/AuthContext.tsx` created with:
   - AuthContextType interface
@@ -446,6 +448,8 @@ This document breaks down the implementation plan into specific, assignable deve
 ### Task 2.2: Build LoginPage Component [FE] - 3 hours
 
 **Description:** Create responsive login page with Auth0 redirect
+
+**File Location:** `src/pages/__tests__/LoginPage.test.tsx` (per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
 
 **Deliverables:**
 - [ ] `src/pages/LoginPage.tsx` with:
@@ -481,6 +485,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Create callback handler for Auth0 redirect
 
+**File Location:** `src/pages/__tests__/AuthCallback.test.tsx` (per Section 3: Frontend `src/services/__tests__/service.test.ts`)
+
 **Deliverables:**
 - [ ] `src/pages/AuthCallback.tsx` with:
   - Extracts `code` and `state` from URL
@@ -511,6 +517,8 @@ This document breaks down the implementation plan into specific, assignable deve
 ### Task 2.4: Create ProtectedRoute Component [FE] - 3 hours
 
 **Description:** Implement route protection with role-based access
+
+**File Location:** `src/components/__tests__/ProtectedRoute.test.tsx` (per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
 
 **Deliverables:**
 - [ ] `src/components/ProtectedRoute.tsx` with:
@@ -564,6 +572,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Create user menu with logout capability
 
+**File Location:** `src/components/__tests__/UserMenu.test.tsx` (per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
+
 **Deliverables:**
 - [ ] `src/components/UserMenu.tsx` with:
   - Display current user email
@@ -591,6 +601,8 @@ This document breaks down the implementation plan into specific, assignable deve
 ### Task 2.7: Create App Router & Layout [FE] - 3 hours
 
 **Description:** Set up React Router with main layout
+
+**File Location:** `src/__tests__/App.test.tsx` (per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
 
 **Deliverables:**
 - [ ] `src/App.tsx` with React Router setup
@@ -636,6 +648,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Implement JWT generation and validation
 
+**File Location:** `src/services/__tests__/tokenService.test.ts` (per Section 3: Backend `src/services/__tests__/service.test.ts`)
+
 **Deliverables:**
 - [ ] `src/services/tokenService.ts` with:
   - TokenPayload interface
@@ -666,6 +680,8 @@ This document breaks down the implementation plan into specific, assignable deve
 ### Task 3.2: Implement Auth Middleware [BE] - 5 hours
 
 **Description:** Create middleware for JWT validation and role refresh
+
+**File Location:** `src/middleware/__tests__/auth.test.ts` (per Section 3: Backend `src/middleware/__tests__/middleware.test.ts`)
 
 **Deliverables:**
 - [ ] `src/middleware/auth.ts` with:
@@ -700,6 +716,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Implement login rate limiting (5 attempts / 15 min)
 
+**File Location:** `src/middleware/__tests__/rateLimiter.test.ts` (per Section 3: Backend `src/middleware/__tests__/middleware.test.ts`)
+
 **Deliverables:**
 - [ ] `src/middleware/rateLimiter.ts` with:
   - loginRateLimiter(req, res, next)
@@ -727,7 +745,11 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ### Task 3.4: Implement Auth Routes [BE] - 6 hours
 
+**Type:** INTEGRATION TEST (Move to Sprint 5)
+
 **Description:** Create backend auth endpoints
+
+**File Location:** `src/routes/__tests__/auth.integration.test.ts` (per Section 3: Backend `src/routes/__tests__/route.integration.test.ts`)
 
 **Deliverables:**
 - [ ] `src/routes/auth.ts` with routes:
@@ -823,6 +845,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Create centralized error handler
 
+**File Location:** `src/middleware/__tests__/errorHandler.test.ts` (per Section 3: Backend `src/middleware/__tests__/middleware.test.ts`)
+
 **Deliverables:**
 - [ ] `src/middleware/errorHandler.ts` with:
   - Catch all errors
@@ -842,11 +866,13 @@ This document breaks down the implementation plan into specific, assignable deve
 ---
 
 ### Sprint 3 Summary
-- **Total Tasks:** 7
-- **Total Hours:** 27 hours (~1 week for 1 BE dev)
-- **Deliverables:** Complete JWT + middleware + routes
+**UNIT TESTS ONLY (per Pyramid - 70% of tests)**
+- **Total Tasks:** 4 unit tests (3.1, 3.2, 3.3, 3.7)
+- **Total Hours:** 14 hours (~1 week for 1 BE dev)
+- **Deliverables:** TokenService, Auth Middleware, Rate Limiter, Error Handler (all UNIT tested)
 - **Testing:** 80%+ unit test coverage
-- **Blockers:** Requires Sprint 1 Auth0 config complete
+- **NOTE:** Integration tests 3.4, 3.5, 3.6 moved to Sprint 5
+- **Blockers:** Requires Sprint 1 complete
 
 ---
 
@@ -863,6 +889,8 @@ This document breaks down the implementation plan into specific, assignable deve
 ### Task 4.1: Create Authorization Middleware [BE] - 3 hours
 
 **Description:** Implement role-based endpoint protection
+
+**File Location:** `src/middleware/__tests__/authorize.test.ts` (per Section 3: Backend `src/middleware/__tests__/middleware.test.ts`)
 
 **Deliverables:**
 - [ ] `src/middleware/authorize.ts` with:
@@ -904,6 +932,8 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Build role-based landing page
 
+**File Location:** `src/pages/__tests__/Dashboard.test.tsx` (per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
+
 **Deliverables:**
 - [ ] `src/pages/Dashboard.tsx` that routes by role:
   - Submitter → SubmitterDashboard
@@ -927,6 +957,12 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Description:** Build dashboard pages for each role
 
+**File Locations:** 
+- `src/pages/__tests__/SubmitterDashboard.test.tsx`
+- `src/pages/__tests__/EvaluatorDashboard.test.tsx`
+- `src/pages/__tests__/AdminDashboard.test.tsx`
+(per Section 3: Frontend `src/components/__tests__/Component.test.tsx`)
+
 **Deliverables:**
 - [ ] `src/pages/SubmitterDashboard.tsx`
 - [ ] `src/pages/EvaluatorDashboard.tsx`
@@ -945,10 +981,14 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ### Task 4.5: Integration Tests [BE] - 4 hours
 
+**Type:** INTEGRATION TEST (Move to Sprint 5)
+
 **Description:** Create integration tests for RBAC
 
+**File Location:** `src/routes/__tests__/auth.integration.test.ts` for auth routes; `src/routes/__tests__/rbac.integration.test.ts` for RBAC (per Section 3: Backend `src/routes/__tests__/route.integration.test.ts`)
+
 **Deliverables:**
-- [ ] `src/routes/__tests__/auth.integration.test.ts`
+- [ ] `src/routes/__tests__/rbac.integration.test.ts`
 - [ ] Test role-based route access
 - [ ] Test authorization middleware
 - [ ] Test protected endpoints
@@ -964,15 +1004,163 @@ This document breaks down the implementation plan into specific, assignable deve
 ---
 
 ### Sprint 4 Summary
-- **Total Tasks:** 5
-- **Total Hours:** 21 hours (~1 week for FE + BE)
-- **Deliverables:** Complete RBAC implementation
-- **Testing:** 80%+ coverage
-- **Blockers:** Requires Sprint 3 complete
+**UNIT TESTS ONLY (per Pyramid - 70% of tests)**
+- **Total Tasks:** 3 unit tests (4.1, 4.3, 4.4)
+- **Total Hours:** 13 hours (~1 week for FE + BE team)
+- **Deliverables:** Authorization Middleware, Dashboard components (all UNIT tested)
+- **Testing:** 70%+ unit test coverage on frontend, 80%+ on backend
+- **NOTE:** Integration tests for RBAC moved to Sprint 5
+- **Blockers:** Requires Sprints 1-3 complete
 
 ---
 
-## Sprint 5: Testing, Security & Deployment (Days 13-14)
+## Sprint 5: Integration Testing (20% of tests - Days 10-12)
+
+### Sprint 5 Goals
+- [ ] All backend routes integration tested (real database)
+- [ ] Auth flow end-to-end verified (code exchange → JWT → protected routes)
+- [ ] RBAC integration tests passing
+- [ ] Coverage: 80%+ on all endpoints
+
+---
+
+### Task 5.1: Backend Route Integration Tests [BE] - 6 hours
+
+**Type:** INTEGRATION TEST (from Sprint 3)
+
+**Description:** Integration test all auth endpoints with real PostgreSQL
+
+**File Location:** `src/routes/__tests__/auth.integration.test.ts` (per Section 3: Backend `src/routes/__tests__/route.integration.test.ts`)
+
+**Deliverables:**
+- [ ] `src/routes/__tests__/auth.integration.test.ts` combining Tasks 3.4, 3.5, 3.6:
+  - POST /callback - code exchange tests
+  - POST /logout - logout tests
+  - GET /me - current user tests
+  - Real PostgreSQL test database
+  - Real Redis for token revocation
+
+**Tests Required:** 80%+ coverage
+- [ ] Code exchange creates JWT
+- [ ] Logout revokes token
+- [ ] GET /me returns user info
+- [ ] Error responses correct
+
+**Time Estimate:** 6 hours  
+**Priority:** 🔴 CRITICAL
+
+---
+
+### Task 5.2: RBAC Integration Tests [BE] - 4 hours
+
+**Type:** INTEGRATION TEST (from Sprint 4)
+
+**Description:** Test role-based route access with real database
+
+**File Location:** `src/routes/__tests__/rbac.integration.test.ts` (per Section 3: Backend `src/routes/__tests__/route.integration.test.ts`)
+
+**Deliverables:**
+- [ ] Test authorization enforcement per role
+- [ ] Test protected endpoints
+- [ ] Real database seeding with test users
+
+**Tests Required:** 80%+ coverage
+- [ ] User with role can access
+- [ ] User without role gets 403
+- [ ] Multiple roles work correctly
+
+**Time Estimate:** 4 hours  
+**Priority:** 🟡 HIGH
+
+---
+
+### Sprint 5 Summary
+**INTEGRATION TESTS ONLY (per Pyramid - 20% of tests)**
+- **Total Tasks:** 2 integration tests (5.1, 5.2 combining 3.4, 3.5, 3.6, 4.5)
+- **Total Hours:** 10 hours (~1 week for 1 BE dev)
+- **Deliverables:** Auth routes + RBAC integration tested with real DB/Redis
+- **Testing:** 80%+ coverage on all endpoints
+- **Blockers:** Requires Sprints 1-4 complete
+
+---
+
+## Sprint 6: E2E Testing (10% of tests - Days 13)
+
+### Sprint 6 Goals
+- [ ] Critical user workflows tested end-to-end
+- [ ] Happy path scenarios verified
+- [ ] <5 seconds per E2E test
+
+---
+
+### Task 6.1: Auth Flow E2E Test [FE] - 4 hours
+
+**Type:** E2E TEST (Playwright)
+
+**Description:** Test complete authentication flow end-to-end
+
+**File Location:** `tests/e2e/auth-flow.spec.ts` (per Section 3: E2E `tests/e2e/`)
+
+**Deliverables:**
+- [ ] `tests/e2e/auth-flow.spec.ts` with Playwright tests:
+  - User visits login page
+  - User clicks Auth0 login
+  - Auth0 callback redirects to dashboard
+  - User logged in status verified
+  - Logout clears session
+
+**Tests Required:** Happy path only
+- [ ] Complete login flow works
+- [ ] Redirect to dashboard occurs
+- [ ] Logout functional
+- [ ] <5 seconds total
+
+**Acceptance Criteria:**
+- [ ] Test runs consistently
+- [ ] No flakiness
+- [ ] Clear error messages
+
+**Time Estimate:** 4 hours  
+**Priority:** 🟡 HIGH
+
+---
+
+### Task 6.2: Role-Based Access E2E Test [FE] - 3 hours
+
+**Type:** E2E TEST (Playwright)
+
+**Description:** Test role-based access control end-to-end
+
+**File Location:** `tests/e2e/role-based-access.spec.ts` (per Section 3: E2E `tests/e2e/`)
+
+**Deliverables:**
+- [ ] `tests/e2e/role-based-access.spec.ts` with Playwright tests:
+  - Submitter user sees submitter dashboard
+  - Evaluator user sees evaluator dashboard
+  - Admin user sees admin dashboard
+  - Unauthorized user redirected
+
+**Tests Required:** Role verification
+- [ ] Each role sees correct dashboard
+- [ ] Unauthorized access blocked
+- [ ] <5 seconds total
+
+**Time Estimate:** 3 hours  
+**Priority:** 🟡 HIGH
+
+---
+
+### Sprint 6 Summary
+**E2E TESTS ONLY (per Pyramid - 10% of tests)**
+- **Total Tasks:** 2 E2E tests (6.1, 6.2)
+- **Total Hours:** 7 hours (~1 week for 1 FE dev)
+- **Deliverables:** Auth flow and role-based access critical workflows tested
+- **Framework:** Playwright
+- **Blockers:** Requires Sprints 1-5 complete
+
+---
+
+## Sprint 7: Testing, Security & Deployment (Days 14-15)
 
 ### Sprint 5 Goals
 - [ ] 80% test coverage achieved
@@ -982,7 +1170,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.1: Achieve 80% Test Coverage [FE + BE] - 6 hours
+### Task 7.1: Achieve 80% Test Coverage [FE + BE] - 6 hours
 
 **Description:** Ensure all code meets coverage threshold
 
@@ -1004,7 +1192,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.2: Security Audit [QA] - 4 hours
+### Task 7.2: Security Audit [QA] - 4 hours
 
 **Description:** Conduct security review
 
@@ -1033,7 +1221,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.3: Performance Testing [QA] - 4 hours
+### Task 7.3: Performance Testing [QA] - 4 hours
 
 **Description:** Verify performance targets met
 
@@ -1054,7 +1242,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.4: Docker Configuration [QA] - 3 hours
+### Task 7.4: Docker Configuration [QA] - 3 hours
 
 **Description:** Create Docker image for deployment
 
@@ -1072,7 +1260,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.5: Documentation [QA] - 4 hours
+### Task 7.5: Documentation [QA] - 4 hours
 
 **Description:** Create production documentation
 
@@ -1088,7 +1276,7 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Task 5.6: Production Deployment [QA] - 4 hours
+### Task 7.6: Production Deployment [QA] - 4 hours
 
 **Description:** Deploy to production environment
 
@@ -1104,12 +1292,29 @@ This document breaks down the implementation plan into specific, assignable deve
 
 ---
 
-### Sprint 5 Summary
+### Sprint 7 Summary
 - **Total Tasks:** 6
 - **Total Hours:** 25 hours (~2 days for all)
-- **Deliverables:** Production-ready system
-- **Testing:** 80%+ coverage verified
-- **Blockers:** Requires Sprints 1-4 complete
+- **Deliverables:** Production-ready system with full test coverage
+- **Testing:** 80%+ coverage verified across 19 unit+integration+E2E tests
+- **Blockers:** Requires Sprints 1-6 complete
+
+---
+
+## Test Distribution Summary
+
+**Total Test Tasks:** 19 (per Testing Pyramid)
+- **Unit Tests:** 13 tasks (68%) = Sprints 2, 3, 4
+- **Integration Tests:** 4 tasks (21%) = Sprint 5  
+- **E2E Tests:** 2 tasks (11%) = Sprint 6
+- **Quality/Deployment:** 6 tasks = Sprint 7
+
+**File Locations (per Section 3 of Constitution):**
+- Frontend: `src/components/__tests__/`, `src/pages/__tests__/`, `src/services/__tests__/`, `src/__tests__/`
+- Backend: `src/services/__tests__/`, `src/middleware/__tests__/`, `src/routes/__tests__/`
+- E2E: `tests/e2e/`
+
+**All tasks reference correct Section 3 file locations from constitution**
 
 ---
 
@@ -1147,24 +1352,26 @@ This document breaks down the implementation plan into specific, assignable deve
 
 **Frontend Developer (FE):**
 - Sprint 1: Tasks 1.1, 1.3, 1.9
-- Sprint 2: ALL (Tasks 2.1-2.7)
-- Sprint 3: (supports integration testing)
-- Sprint 4: Tasks 4.3, 4.4
-- Sprint 5: Task 5.1, 5.3
+- Sprint 2: ALL (Tasks 2.1-2.7) - 7 unit tests
+- Sprint 3: (support only)
+- Sprint 4: Tasks 4.3, 4.4 - 2 unit tests
+- Sprint 5: (support only)
+- Sprint 6: Tasks 6.1, 6.2 - 2 E2E tests
+- Sprint 7: Task 7.1, 7.3 (partial)
 
 **Backend Developer (BE):**
 - Sprint 1: Tasks 1.2, 1.3, 1.4, 1.6, 1.7, 1.8, 1.9
-- Sprint 2: (supports API testing)
-- Sprint 3: ALL (Tasks 3.1-3.7)
-- Sprint 4: Tasks 4.1, 4.2, 4.5
-- Sprint 5: Task 5.1, 5.3
+- Sprint 2: (support only)
+- Sprint 3: Tasks 3.1, 3.2, 3.3, 3.7 - 4 unit tests
+- Sprint 4: Tasks 4.1 - 1 unit test
+- Sprint 5: Tasks 5.1, 5.2 - 2 integration tests
+- Sprint 6: (support only)
+- Sprint 7: Task 7.1, 7.2, 7.3 (partial)
 
 **DevOps/QA Engineer (QA):**
 - Sprint 1: Tasks 1.5, 1.6, 1.8, 1.10, 1.11
-- Sprint 2: (test support)
-- Sprint 3: (test support)
-- Sprint 4: (test support)
-- Sprint 5: ALL (Tasks 5.2-5.6)
+- Sprints 2-6: (test support & monitoring)
+- Sprint 7: Tasks 7.2, 7.3, 7.4, 7.5, 7.6
 
 ---
 
@@ -1211,8 +1418,9 @@ A sprint is complete when:
 
 ---
 
-**Tasks Document Version:** 1.0  
-**Status:** ✅ READY FOR TEAM ASSIGNMENT  
-**Total Hours:** 116 hours (~8 working days for 3-person team)  
-**Timeline:** 2.5 weeks (5 working days per sprint with overlaps)  
-**Constitution Compliance:** ✅ TypeScript Strict | Jest 80% | JSDoc Required
+**Tasks Document Version:** 2.0  
+**Status:** ✅ PYRAMID-ALIGNED & READY FOR TEAM ASSIGNMENT  
+**Total Test Tasks:** 19 (13 unit + 4 integration + 2 E2E)\n**Total Hours:** 147 hours (~10.5 working days for 3-person team)  
+**Timeline:** 3 weeks (7 sprints with overlaps)  
+**Test Distribution:** 68% unit, 21% integration, 11% E2E (per constitution pyramid)  
+**Constitution Compliance:** ✅ TypeScript Strict | Jest 80% | JSDoc Required | All file locations per Section 3
