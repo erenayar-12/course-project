@@ -128,7 +128,412 @@ All code is written following **Test-Driven Development (TDD)** principles with 
 
 ---
 
-### Section 3: Unit Testing Standards (Jest)
+### Section 3: Test Types & Organization
+
+**Folder Structure (Git-friendly, mirrors source layout):**
+
+**Frontend Project (React 18 + Vite):**
+```
+src/
+├── components/
+│   ├── LoginPage.tsx
+│   ├── AuthContext.tsx
+│   ├── ProtectedRoute.tsx
+│   └── __tests__/
+│       ├── LoginPage.test.tsx          # Unit test (1:1 with source)
+│       ├── AuthContext.test.tsx        # Unit test
+│       └── ProtectedRoute.integration.test.tsx  # Integration test (optional for components)
+├── services/
+│   ├── authService.ts
+│   └── __tests__/
+│       ├── authService.test.ts         # Unit test (pure functions)
+│       └── authService.integration.test.ts    # Integration with real API
+├── utils/
+│   ├── validators.ts
+│   └── __tests__/
+│       └── validators.test.ts          # Unit test
+├── pages/
+│   ├── Dashboard.tsx
+│   └── __tests__/
+│       └── Dashboard.test.tsx          # Unit test (page component)
+└── tests/
+    ├── e2e/
+    │   ├── auth-flow.spec.ts           # E2E: Login → Dashboard → Logout
+    │   └── role-based-access.spec.ts   # E2E: Different roles access content
+    ├── fixtures/
+    │   ├── users.ts                    # Reusable test user data
+    │   └── tokens.ts                   # Reusable test token data
+    ├── setup.ts                        # Jest global setup
+    └── helpers.ts                      # Shared test utilities
+```
+
+**Backend Project (Node.js + Express):**
+```
+src/
+├── services/
+│   ├── tokenService.ts
+│   ├── authService.ts
+│   └── __tests__/
+│       ├── tokenService.test.ts        # Unit test (pure functions)
+│       ├── authService.test.ts         # Unit test (mocked Auth0)
+│       └── tokenService.integration.test.ts  # Integration (real crypto)
+├── middleware/
+│   ├── auth.ts
+│   ├── errorHandler.ts
+│   └── __tests__/
+│       ├── auth.test.ts                # Unit test (mocked JWT)
+│       └── auth.integration.test.ts    # Integration (real middleware chain)
+├── routes/
+│   ├── auth.ts
+│   └── __tests__/
+│       └── auth.integration.test.ts    # Integration (full endpoint testing)
+├── controllers/
+│   └── __tests__/
+│       └── authController.test.ts      # Unit test (mocked dependencies)
+└── tests/
+    ├── e2e/
+    │   ├── auth-flow.spec.ts           # E2E: Code exchange → JWT → Protected route
+    │   └── rbac.spec.ts                # E2E: Role-based endpoint access
+    ├── fixtures/
+    │   ├── users.ts                    # Test user factory
+    │   ├── tokens.ts                   # Test token factory
+    │   └── database.ts                 # Database seeding utilities
+    ├── setup.ts                        # Jest setup (database, Redis)
+    └── helpers.ts                      # Test utilities (request builders, assertions)
+```
+
+**Test File Distribution:**
+- **Unit Tests (70%):** `__tests__/` co-located with source files
+  - One file per source file (e.g., `UserService.ts` → `__tests__/UserService.test.ts`)
+  - Isolated tests, fast execution (<100ms each)
+  
+- **Integration Tests (20%):** `tests/integration/` grouped by feature
+  - `POST /api/auth/callback` all scenarios in one file
+  - Database state verified, real dependencies
+  
+- **E2E Tests (10%):** `tests/e2e/` grouped by user journey
+  - `auth-flow.spec.ts` - complete login/logout flow
+  - `rbac.spec.ts` - role-based access verification
+
+---
+
+### Section 4: Naming Conventions
+
+**Test File Naming:**
+
+| Test Type | Frontend | Backend | Purpose |
+|-----------|----------|---------|---------|
+| Unit | `Component.test.tsx` | `service.test.ts` | Pure functions, isolated units |
+| Integration | `Component.integration.test.tsx` | `route.integration.test.ts` | Component boundaries, feature workflows |
+| E2E | `user-journey-name.spec.ts` | `user-journey-name.spec.ts` | Full app scenarios |
+
+**Examples:**
+```
+✅ LoginPage.test.tsx              (unit test for React component)
+✅ authService.test.ts             (unit test for utility/service)
+✅ auth.integration.test.ts        (integration test for middleware/route)
+✅ login-with-auth0.spec.ts        (E2E test for user journey)
+
+❌ LoginPageTest.tsx               (don't use suffix)
+❌ test-authService.ts             (don't prefix)
+❌ AuthServiceUnitTest.ts          (too verbose)
+```
+
+**Test Suite & Case Naming:**
+
+**Pattern:** `describe('[ComponentName | ServiceName]', ...)`
+
+```typescript
+// ✅ GOOD: Clear, hierarchical test structure
+describe('TokenService', () => {
+  describe('generateToken', () => {
+    describe('when payload is valid', () => {
+      it('should return signed JWT with 30-minute expiry', () => {});
+      it('should include userId and email in claims', () => {});
+    });
+    describe('when payload is invalid', () => {
+      it('should throw InvalidTokenError', () => {});
+      it('should include error details in message', () => {});
+    });
+  });
+});
+
+// ✅ GOOD: For React components
+describe('LoginPage', () => {
+  describe('rendering', () => {
+    it('should display email input field', () => {});
+    it('should display password input field', () => {});
+  });
+  describe('user interactions', () => {
+    it('should call onSubmit when form submitted', () => {});
+    it('should show error message on failed login', () => {});
+  });
+});
+
+// ✅ GOOD: For API endpoints
+describe('POST /api/auth/callback', () => {
+  describe('with valid authorization code', () => {
+    it('should return 200 with JWT token', () => {});
+    it('should set secure httpOnly cookie', () => {});
+  });
+  describe('with invalid authorization code', () => {
+    it('should return 400 Bad Request', () => {});
+    it('should include error message', () => {});
+  });
+});
+```
+
+**Test Case Naming Pattern:** `it('should [action] when [condition]', ...)`
+
+```typescript
+// ✅ GOOD: Clear what is being tested and when
+it('should validate email format when email contains @', () => {});
+it('should reject email when format is invalid', () => {});
+it('should update user role when fetched from Auth0', () => {});
+
+// ❌ BAD: Vague, doesn't describe condition
+it('validates email', () => {});
+it('works correctly', () => {});
+it('should handle errors', () => {});
+```
+
+**Describe Block Hierarchy:**
+
+```typescript
+describe('AuthService', () => {
+  // Level 1: Service name
+
+  describe('login', () => {
+    // Level 2: Method name
+
+    describe('when credentials are valid', () => {
+      // Level 3: Condition/scenario
+
+      it('should return user with JWT token', () => {});  // Level 4: Test case
+      it('should set session cookie', () => {});
+    });
+
+    describe('when credentials are invalid', () => {
+      // Level 3: Alternative condition
+
+      it('should throw InvalidCredentialsError', () => {});
+      it('should increment failed attempt counter', () => {});
+    });
+  });
+});
+```
+
+---
+
+### Section 5: Test Anatomy
+
+**Primary Pattern: Arrange-Act-Assert (AAA)**
+
+Every test follows this structure for clarity and maintainability:
+
+```typescript
+/**
+ * Arrange: Set up test data and mocks
+ * Act: Execute the code being tested
+ * Assert: Verify the expected outcome
+ */
+it('should generate JWT with correct claims', () => {
+  // 🔵 ARRANGE: Set up test data
+  const userId = 'test-user-123';
+  const email = 'user@example.com';
+  const role = 'SUBMITTER';
+
+  // 🟢 ACT: Execute the function being tested
+  const token = TokenService.generateToken({ userId, email, role });
+
+  // 🔴 ASSERT: Verify the outcome
+  const decoded = TokenService.verifyToken(token);
+  expect(decoded.userId).toBe(userId);
+  expect(decoded.email).toBe(email);
+  expect(decoded.role).toBe(role);
+});
+```
+
+**Advanced AAA with Setup/Teardown:**
+
+```typescript
+describe('LoginPage', () => {
+  // 🔵 SHARED ARRANGE (beforeEach, NOT beforeAll)
+  let mockAuthService: jest.Mock;
+
+  beforeEach(() => {
+    // Reset mocks BEFORE each test (test isolation)
+    mockAuthService = jest.fn();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Clean up after each test (teardown)
+    jest.restoreAllMocks();
+  });
+
+  it('should call authService.login when form submitted', () => {
+    // 🔵 ARRANGE (test-specific)
+    const { getByRole } = render(<LoginPage onSubmit={mockAuthService} />);
+    const submitButton = getByRole('button', { name: /login/i });
+
+    // 🟢 ACT
+    fireEvent.click(submitButton);
+
+    // 🔴 ASSERT
+    expect(mockAuthService).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show error message on failed login', () => {
+    // 🔵 ARRANGE
+    const error = new Error('Invalid credentials');
+    mockAuthService.mockRejectedValue(error);
+    render(<LoginPage onSubmit={mockAuthService} />);
+
+    // 🟢 ACT
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    // 🔴 ASSERT
+    expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+  });
+});
+```
+
+**Setup vs. Teardown Patterns:**
+
+```typescript
+describe('AuthService', () => {
+  // ✅ Use beforeEach for test-specific setup (test isolation)
+  beforeEach(() => {
+    // Runs BEFORE each test
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    // Runs AFTER each test (cleanup)
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
+  // ❌ Avoid beforeAll for test-specific setup (violates isolation)
+  // beforeAll(() => {
+  //   // DON'T set up test-specific data here
+  //   // Only OK for expensive one-time setup (database, server)
+  // });
+
+  it('test 1', () => {
+    // beforeEach ran before this test
+    // afterEach will run after
+  });
+
+  it('test 2', () => {
+    // beforeEach ran again before this test (fresh state)
+    // afterEach will run after
+  });
+});
+```
+
+**Integration Test Setup:**
+
+```typescript
+describe('POST /api/auth/callback', () => {
+  // Expensive one-time setup (OK to use beforeAll)
+  beforeAll(async () => {
+    // Start database container
+    await setupTestDatabase();
+    // Migrate schema
+    await runMigrations();
+  });
+
+  afterAll(async () => {
+    // Teardown database
+    await teardownTestDatabase();
+  });
+
+  // Test-specific cleanup (use beforeEach/afterEach)
+  beforeEach(async () => {
+    // Clear tables before each test
+    await truncateAllTables();
+  });
+
+  afterEach(async () => {
+    // Cleanup after each test
+    jest.clearAllMocks();
+  });
+
+  it('should exchange code for JWT', async () => {
+    // Arrange: Create test data
+    const testCode = 'valid-code-123';
+
+    // Act: Send request
+    const response = await request(app)
+      .post('/api/auth/callback')
+      .send({ code: testCode });
+
+    // Assert: Verify response and database
+    expect(response.status).toBe(200);
+    expect(response.body.jwt).toBeDefined();
+    
+    const user = await prisma.user.findUnique({ where: { email: 'user@example.com' } });
+    expect(user).toBeDefined();
+  });
+});
+```
+
+**Test Independence Principle (CRITICAL):**
+
+```typescript
+// ❌ BAD: Tests depend on global state
+let userId: string;
+
+describe('UserService', () => {
+  it('should create user', () => {
+    const user = createUser({ email: 'user@example.com' });
+    userId = user.id;  // Sets global state
+    expect(user).toBeDefined();
+  });
+
+  it('should get user', () => {
+    // This test DEPENDS on previous test running first
+    // Will fail if run in different order or in isolation
+    const user = getUser(userId);
+    expect(user).toBeDefined();
+  });
+});
+
+// ✅ GOOD: Each test is independent
+describe('UserService', () => {
+  let userId: string;
+
+  beforeEach(() => {
+    // Each test gets fresh data
+    const user = createUser({ email: 'user@example.com' });
+    userId = user.id;
+  });
+
+  it('should create user', () => {
+    expect(userId).toBeDefined();
+  });
+
+  it('should get user', () => {
+    // Uses userId created in beforeEach
+    const user = getUser(userId);
+    expect(user).toBeDefined();
+  });
+});
+```
+
+**Key Independence Rules:**
+- [ ] Each test must run independently (remove global setup/teardown)
+- [ ] Each test must be runnable in isolation: `npm test -- --testNamePattern="specific test"`
+- [ ] Tests can run in ANY order (randomize with `--randomOrder`)
+- [ ] No test should depend on another test's output
+- [ ] Use `beforeEach` (not `beforeAll`) for test-specific data
+
+---
+
+### Section 6: Unit Testing Standards (Jest)
 
 **Frontend Unit Tests (React 18 + React Testing Library):**
 ```typescript
@@ -194,7 +599,7 @@ describe('TokenService', () => {
 
 ---
 
-### Section 4: Integration Testing Standards
+### Section 7: Integration Testing Standards
 
 **Backend Integration Tests (Express + Prisma + PostgreSQL):**
 ```typescript
@@ -270,7 +675,7 @@ describe('POST /api/auth/callback', () => {
 
 ---
 
-### Section 5: E2E Testing Standards (Critical Workflows Only)
+### Section 8: E2E Testing Standards (Critical Workflows Only)
 
 **E2E Tests - Happy Path Only:**
 ```typescript
@@ -323,7 +728,7 @@ describe('Authentication Flow - E2E (Happy Path)', () => {
 
 ---
 
-### Section 6: Mocking, Fixtures & Test Data
+### Section 9: Mocking, Fixtures & Test Data
 
 **Mocking Strategy (Hierarchy):**
 1. **Avoid mocking:** If possible, test real code (prefer integration tests)
@@ -379,7 +784,7 @@ beforeEach(async () => {
 
 ---
 
-### Section 7: Test Organization & Structure
+### Section 10: Test Organization & Structure
 
 **File Structure:**
 ```
@@ -450,7 +855,7 @@ export async function seedTestUser(overrides = {}) {
 
 ---
 
-### Section 8: Testing in CI/CD Pipeline
+### Section 11: Testing in CI/CD Pipeline
 
 **GitHub Actions Test Workflow:**
 ```yaml
