@@ -533,7 +533,690 @@ describe('UserService', () => {
 
 ---
 
-### Section 6: Unit Testing Standards (Jest)
+### Section 6: Mocking & Test Data
+
+**The Mocking Hierarchy: What to Mock vs. Not Mock**
+
+```
+┌─────────────────────────────────────┐
+│  AVOID MOCKING (Use Real Code)     │
+├─────────────────────────────────────┤
+│ - Code you own (services, utils)    │
+│ - Simple utilities (validators)     │
+│ - Pure functions (calculations)     │
+│ - ORM queries (use test DB)         │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  STUB/MOCK (Use Test Doubles)       │
+├─────────────────────────────────────┤
+│ - External APIs (Auth0, Stripe)     │
+│ - Third-party services (email)      │
+│ - Time-dependent code (Date.now)    │
+│ - Infrastructure (file system)      │
+└─────────────────────────────────────┘
+```
+
+**Category 1: Mock External Services (HTTP APIs)**
+
+```typescript
+// ❌ BAD: You OWN the auth service, don't mock it
+jest.mock('./src/services/tokenService');
+
+// ✅ GOOD: Auth0 is external, mock the HTTP call
+jest.mock('axios');
+
+it('should login when Auth0 returns valid token', () => {
+  // Arrange: Mock the external API
+  jest.mocked(axios.post).mockResolvedValueOnce({
+    data: { 
+      id_token: 'eyJhbGc...', 
+      access_token: 'token123' 
+    }
+  });
+
+  // Act: Call your code (NOT mocked)
+  const result = authService.loginWithAuth0('code');
+
+  // Assert
+  expect(result.token).toBeDefined();
+});
+```
+
+**Services to Mock (External Dependencies):**
+- Auth0, Okta, OAuth providers
+- Email services (SendGrid, AWS SES)
+- Payment processors (Stripe, PayPal)
+- Analytics services (Segment, Mixpanel)
+- Third-party APIs (weather, maps, etc.)
+
+**Category 2: Stub Time-Dependent Code**
+
+```typescript
+it('should refresh token when lastRefresh is > 5 minutes ago', () => {
+  // Arrange: Control time
+  jest.useFakeTimers();
+  const now = new Date('2026-02-24T12:00:00Z');
+  jest.setSystemTime(now);
+
+  const token = {
+    payload: { roleCheckedAt: new Date('2026-02-24T11:54:00Z') },
+    needsRoleRefresh: () => true // >5 min ago
+  };
+
+  // Act: Advance time
+  jest.advanceTimersByTime(6 * 60 * 1000); // 6 minutes
+
+  // Assert
+  expect(token.needsRoleRefresh()).toBe(true);
+
+  // Cleanup
+  jest.useRealTimers();
+});
+```
+
+**Stubbed Time Functions:**
+- `Date.now()`
+- `new Date()`
+- `jest.useFakeTimers()`
+- `setTimeout()`, `setInterval()`
+- `jest.advanceTimersByTime()`
+
+**Category 3: Fake In-Memory Database (Unit Tests Only)**
+
+```typescript
+// ❌ BAD: Never mock your ORM for integration tests
+// jest.mock('@prisma/client');
+
+// ✅ GOOD: For unit tests of business logic, OK to mock database
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({
+    user: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: '123',
+        email: 'user@example.com',
+        role: 'SUBMITTER'
+      })
+    }
+  }))
+}));
+
+it('should load user from database', async () => {
+  const prisma = new PrismaClient();
+  const user = await prisma.user.findUnique({ where: { id: '123' } });
+  
+  expect(user.email).toBe('user@example.com');
+});
+```
+
+**⚠️ IMPORTANT:** In integration tests, use a REAL test database, not mocks:
+```typescript
+// ✅ GOOD: Integration test uses real database
+describe('User Repository Integration', () => {
+  let prisma: PrismaClient;
+
+  beforeAll(async () => {
+    prisma = new PrismaClient({
+      datasources: { db: { url: process.env.TEST_DATABASE_URL } }
+    });
+    await prisma.$connect();
+  });
+
+  it('should save user to database', async () => {
+    // Real database, not mocked
+    await prisma.user.create({
+      data: { email: 'user@example.com', role: 'SUBMITTER' }
+    });
+
+    const user = await prisma.user.findUnique({ 
+      where: { email: 'user@example.com' } 
+    });
+
+    expect(user).toBeDefined();
+  });
+});
+```
+
+**Category 4: Test Fixtures & Helper Functions**
+
+**Bad: Duplicated test data everywhere**
+```typescript
+// ❌ BAD: Test data scattered across files
+it('should process user', () => {
+  const user = { id: '123', email: 'user@example.com', role: 'SUBMITTER' };
+  // ... test code
+});
+
+it('should validate user', () => {
+  const user = { id: '123', email: 'user@example.com', role: 'SUBMITTER' };
+  // ... test code
+});
+```
+
+**Good: Centralized fixtures with factories**
+```typescript
+// src/tests/fixtures/users.ts
+export const TEST_USER_SUBMITTER = {
+  id: 'test-user-1',
+  email: 'submitter@example.com',
+  name: 'Test Submitter',
+  role: 'SUBMITTER' as const,
+  auth0Id: 'auth0|123',
+  createdAt: new Date('2026-01-01'),
+};
+
+export function createTestUser(overrides: Partial<User> = {}): User {
+  return { ...TEST_USER_SUBMITTER, ...overrides };
+}
+
+export function createTestToken(userId: string, role: string = 'SUBMITTER'): string {
+  return jwt.sign({ userId, role, exp: Date.now() + 1800000 }, 'test-secret');
+}
+
+// Usage in tests:
+it('should process user', () => {
+  const user = createTestUser({ email: 'custom@example.com' });
+  // ... test code
+});
+```
+
+**Helper Functions Pattern:**
+```typescript
+// src/tests/helpers/request.ts
+export async function loginAsUser(app: Express.Application, user = TEST_USER_SUBMITTER) {
+  const response = await request(app)
+    .post('/api/auth/callback')
+    .send({ code: 'valid-auth0-code' });
+  
+  return response.body.jwt; // Returns token
+}
+
+export async function getProtectedEndpoint(
+  app: Express.Application, 
+  token: string,
+  endpoint: string
+) {
+  return request(app)
+    .get(endpoint)
+    .set('Authorization', `Bearer ${token}`);
+}
+
+// Usage in integration tests:
+it('should get protected data', async () => {
+  const token = await loginAsUser(app);
+  const response = await getProtectedEndpoint(app, token, '/api/data');
+  
+  expect(response.status).toBe(200);
+});
+```
+
+**Fixture Organization:**
+```
+src/tests/fixtures/
+├── users.ts              # User test data + createTestUser()
+├── tokens.ts             # Token test data + createTestToken()
+├── database.ts           # Database seeding + teardown
+└── mockServices.ts       # Mock Auth0, email, payment APIs
+
+src/tests/helpers/
+├── request.ts            # loginAsUser(), getProtectedEndpoint()
+├── database.ts           # setupTestDb(), truncateAllTables()
+└── assertions.ts         # Custom matchers, verification helpers
+```
+
+---
+
+### Section 7: Quality Criteria (CRITICAL - What Makes a Good Test)
+
+**Golden Rules of Test Quality**
+
+A test should:
+1. ✅ **Test observable behavior** (not implementation details)
+2. ✅ **Have meaningful assertions** (not tautological)
+3. ✅ **Test one thing** (single responsibility)
+4. ✅ **Be fast** (<1s unit, <5s integration)
+5. ✅ **Be deterministic** (same result every run)
+
+---
+
+**Rule 1: Test Observable Behavior, Not Implementation Details**
+
+```typescript
+// ❌ BAD: Tests implementation (private methods, internal state)
+it('should call setState when form submitted', () => {
+  const instance = new LoginPage();
+  spyOn(instance, 'setState');
+  instance.handleSubmit();
+  expect(instance.setState).toHaveBeenCalled();
+});
+
+// ✅ GOOD: Tests observable behavior (what user sees/experiences)
+it('should display error message when login fails', () => {
+  render(<LoginPage />);
+  const button = screen.getByRole('button', { name: /login/i });
+  
+  // User clicks button, sees error
+  fireEvent.click(button);
+  
+  expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+});
+
+// ✅ GOOD: Backend observable behavior (API response)
+it('should return 401 when credentials invalid', async () => {
+  const response = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'user@example.com', password: 'wrong' });
+  
+  expect(response.status).toBe(401);
+  expect(response.body.error).toBeDefined();
+});
+```
+
+**Anti-Pattern: Testing Private Methods**
+```typescript
+// ❌ AVOID
+it('should call privateHelper() with correct args', () => {
+  const spy = jest.spyOn(service, 'privateHelper' as any);
+  service.publicMethod();
+  expect(spy).toHaveBeenCalledWith('expectedArg');
+});
+
+// ✅ REPLACE WITH: Test public behavior
+it('should format date correctly', () => {
+  const result = service.publicMethod();
+  expect(result).toMatch(/\d{4}-\d{2}-\d{2}/); // Date format verified
+});
+```
+
+---
+
+**Rule 2: Assertions Must Be Meaningful (Not Tautological)**
+
+**Tautological Tests (Useless - Always Pass):**
+```typescript
+// ❌ BAD: Assertions that are always true (no value)
+it('should return data', () => {
+  const data = getData();
+  expect(data).toBeDefined();  // Tautology: if getData ran, data exists
+  expect(data).toEqual(data);  // Tautology: anything equals itself
+  expect(typeof data).toBe('object'); // Tautology: object is object
+});
+
+// ❌ BAD: Test without assertions
+it('should load user', async () => {
+  const user = await loadUser('123');
+  // No assertions! Test always passes if no error thrown
+});
+
+// ❌ BAD: Asserting on mock calls only
+jest.mocked(axios.get).mockResolvedValue({ data: user });
+it('should call API', async () => {
+  await service.getUser('123');
+  expect(axios.get).toHaveBeenCalled(); // This is the mock you set up!
+});
+```
+
+**Meaningful Tests (Have Oracles - Human-Validated Expected Values):**
+```typescript
+// ✅ GOOD: Oracle is specific expected behavior
+it('should return user with correct email', () => {
+  const user = await service.loadUser('123');
+  
+  // Oracle: Email is human-verified to be specific value
+  expect(user.email).toBe('alice@example.com');
+  expect(user.role).toBe('SUBMITTER');
+  expect(user.createdAt).toEqual(new Date('2026-01-15'));
+});
+
+// ✅ GOOD: Oracle validates structure and constraints
+it('should return JWT token with 30-minute expiry', () => {
+  const token = service.generateToken('user123');
+  const decoded = jwt.verify(token, 'secret');
+  
+  // Oracle: Expiry is exactly 30 minutes (1800 seconds)
+  expect(decoded.exp - decoded.iat).toBe(1800);
+  expect(decoded.userId).toBe('user123');
+});
+
+// ✅ GOOD: Assertions verify side effects
+it('should save user to database', async () => {
+  await service.createUser(newUser);
+  
+  // Oracle: Verify actual side effect
+  const saved = await db.users.findOne({ email: newUser.email });
+  expect(saved).toBeDefined();
+  expect(saved.id).toBeTruthy();
+});
+```
+
+**Guideline: All Expected Values (Oracles) Must Be:**
+- [ ] Validated by human (not just copy-pasted from output)
+- [ ] Specific (not generic like `toBeDefined()`)
+- [ ] Justified (comment WHY this value matters)
+- [ ] Observable (tests behavior, not internals)
+
+---
+
+**Rule 3: Tests One Thing (Single Responsibility)**
+
+```typescript
+// ❌ BAD: Tests multiple things (3 concerns: auth, DB, email)
+it('should create user, assign default role, and send welcome email', () => {
+  // Concern 1: User creation in DB
+  const user = service.createUser({ email: 'user@example.com' });
+  
+  // Concern 2: Default role assignment
+  expect(user.role).toBe('SUBMITTER');
+  
+  // Concern 3: Email sent
+  expect(mockEmailService.send).toHaveBeenCalledWith(
+    'user@example.com',
+    expect.stringContaining('Welcome')
+  );
+});
+
+// ✅ GOOD: Break into focused tests (one assertion per test)
+it('should create user with default SUBMITTER role', () => {
+  const user = service.createUser({ email: 'user@example.com' });
+  expect(user.role).toBe('SUBMITTER');
+});
+
+it('should send welcome email after user creation', () => {
+  service.createUser({ email: 'user@example.com' });
+  expect(mockEmailService.send).toHaveBeenCalledWith(
+    'user@example.com',
+    expect.stringContaining('Welcome')
+  );
+});
+
+it('should store user in database with generated ID', async () => {
+  const user = await service.createUser({ email: 'user@example.com' });
+  const saved = await db.users.findOne({ id: user.id });
+  expect(saved).toBeDefined();
+});
+```
+
+**Benefits of Single Responsibility:**
+- Failures are precise (you know exactly what failed)
+- Tests are runnable in any order
+- Easier to maintain and debug
+- Better for TDD workflow
+
+---
+
+**Rule 4: Tests Must Be Fast**
+
+**Target Execution Times:**
+- **Unit tests:** <100ms per test (target: <1s for 100 unit tests)
+- **Integration tests:** <500ms per test (target: <5s for 10 integration tests)
+- **E2E tests:** <5s per test (target: <30s for 5 E2E tests)
+
+```typescript
+// ❌ BAD: Waits for real time (too slow)
+it('should rate limit after 5 attempts', async () => {
+  for (let i = 0; i < 6; i++) {
+    await request(app).post('/api/auth/login').send(badCreds);
+  }
+  // Real 15-minute window? This test takes 15 minutes!
+});
+
+// ✅ GOOD: Mocks time (fast)
+it('should rate limit after 5 attempts', async () => {
+  jest.useFakeTimers();
+  
+  for (let i = 0; i < 5; i++) {
+    await request(app).post('/api/auth/login').send(badCreds);
+  }
+  
+  // This immediately should be rate-limited (no real wait)
+  expect(response.status).toBe(429);
+  
+  jest.useRealTimers();
+});
+
+// ✅ GOOD: No I/O for unit tests
+it('should validate email format', () => {
+  // Pure function, no DB, no API, no file I/O
+  expect(isValidEmail('user@example.com')).toBe(true);
+  expect(isValidEmail('invalid-email')).toBe(false);
+});
+```
+
+**Optimization Strategies:**
+- Move I/O to integration tests only
+- Mock external services
+- Use in-memory databases for unit tests
+- Parallelize tests where possible
+- Avoid unnecessary setup/teardown
+
+---
+
+**Rule 5: Tests Must Be Deterministic (No Flakiness)**
+
+```typescript
+// ❌ BAD: Flaky (fails intermittently)
+it('should process order', async () => {
+  const order = await service.processOrder();
+  
+  // Race condition: sometimes timestamp is this second, sometimes next
+  expect(order.timestamp).toBe(new Date()); // FLAKY!
+  
+  // File system order not guaranteed
+  const files = await fs.readdir('/data');
+  expect(files[0]).toBe('expected.txt'); // FLAKY!
+  
+  // API response timing not guaranteed
+  await new Promise(r => setTimeout(r, 100)); // FLAKY!
+});
+
+// ✅ GOOD: Deterministic (same result every run)
+it('should process order', async () => {
+  jest.useFakeTimers();
+  const now = new Date('2026-02-24T12:00:00Z');
+  jest.setSystemTime(now);
+  
+  const order = await service.processOrder();
+  
+  // Mock filesystem
+  jest.mock('fs');
+  jest.mocked(fs.readdir).mockResolvedValue(['expected.txt']);
+  
+  // Mock time delays
+  jest.advanceTimersByTime(100);
+  
+  expect(order.timestamp).toEqual(now);
+  jest.useRealTimers();
+});
+```
+
+**Sources of Flakiness:**
+- Real time (use `jest.useFakeTimers()`)
+- Network I/O (mock with `jest.mock()`)
+- File system (mock with `jest.mock('fs')`)
+- Database race conditions (use transactions)
+- Test order dependencies (isolate tests)
+- Random data (use fixed seeds)
+
+---
+
+## Quality Gates (All Must Pass Before Merge)
+
+**Assertion Quality:**
+- [ ] No tautological assertions (always true)
+- [ ] All expected values (oracles) human-validated
+- [ ] Tests verify meaningful behavior
+- [ ] Every test has at least 1 assertion
+
+**Test Independence:**
+- [ ] Tests can run in ANY order
+- [ ] No shared global state
+- [ ] Each test uses `beforeEach` setup
+- [ ] Tests runnable in isolation: `npm test -- --testNamePattern="test name"`
+
+**Performance:**
+- [ ] Unit tests: <100ms each
+- [ ] Integration tests: <500ms each
+- [ ] E2E tests: <5s each
+- [ ] Full test suite: <60 seconds
+
+**Mutation Testing (75% Minimum)**
+
+**What is Mutation Testing?**
+Mutation testing verifies that your tests actually CATCH bugs. It modifies your code (mutations) and checks if tests fail:
+
+```typescript
+// Original code
+function isAdult(age: number): boolean {
+  return age >= 18;
+}
+
+// Mutation 1: >= changed to >
+function isAdult(age: number): boolean {
+  return age > 18; // If tests pass, they didn't catch this!
+}
+
+// Mutation 2: 18 changed to 17
+function isAdult(age: number): boolean {
+  return age >= 17;
+}
+
+// If your test only checks isAdult(25), both mutations pass uncaught!
+// ❌ BAD test (catches neither mutation)
+it('should consider 25 an adult', () => {
+  expect(isAdult(25)).toBe(true);
+});
+
+// ✅ GOOD test (catches both mutations)
+it('should consider 18+ as adults', () => {
+  expect(isAdult(17)).toBe(false);  // Catches mutation 2
+  expect(isAdult(18)).toBe(true);   // Catches mutations 1 & 2
+  expect(isAdult(19)).toBe(true);   // Validates upper bound logic
+});
+```
+
+**Mutation Testing Tools (By Language):**
+
+| Language | Tool | Setup |
+|----------|------|-------|
+| **TypeScript/JavaScript** | Stryker | `npm install --save-dev @stryker-mutator/core` |
+| **Python** | mutmut | `pip install mutmut` |
+| **Java** | Pitest | `maven-plugin` or `gradle-plugin` |
+| **Go** | go-fuzz | Built-in or third-party |
+
+**TypeScript/JavaScript Stryker Setup:**
+```bash
+# Install
+npm install --save-dev @stryker-mutator/core @stryker-mutator/typescript-checker
+
+# Configure stryker.conf.json
+{
+  "testRunner": "jest",
+  "testFramework": "jest",
+  "coverageAnalysis": "perTest",
+  "mutate": ["src/**/*.ts", "!src/**/*.test.ts"],
+  "mutationScore": 75
+}
+
+# Run mutation tests
+npx stryker run
+```
+
+**Stryker Report Interpretation:**
+```
+Mutation score: 78.5%
+  - Killed: 157 mutations (your tests caught these bugs)
+  - Survived: 43 mutations (your tests MISSED these bugs)
+  - Timeout: 2 mutations (infinite loops)
+  - Compile errors: 1 mutation
+
+❌ If score < 75%: Add more edge case tests
+✅ If score >= 75%: Tests are comprehensive
+```
+
+**Common Mutations That Escape (Signs of Weak Tests):**
+```typescript
+// Mutation: Change > to >=
+if (age > 18) { ... }  // Test only checks age=18, misses boundary
+
+// Mutation: Remove statement
+logger.error(err);  // If error logging isn't verified, mutation survives
+
+// Mutation: Change false to true
+return isValid && hasPermission;  // If only testing valid case, missed
+
+// Mutation: Negate condition
+if (!isAdmin) return;  // If only testing admin path, mutation survives
+```
+
+**Practical Mutation Testing in CI/CD:**
+```yaml
+# .github/workflows/mutation-testing.yml
+name: Mutation Tests
+on: [push, pull_request]
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm test  # Unit tests must pass first
+      - run: npx stryker run
+      - name: Check mutation score
+        run: |
+          SCORE=$(npx stryker report | grep "Mutation score" | head -1)
+          if [[ $SCORE < 75 ]]; then
+            echo "Mutation score too low: $SCORE"
+            exit 1
+          fi
+```
+
+---
+
+## Anti-Patterns To Avoid (Code Review Checklist)
+
+| Anti-Pattern | Example | Fix |
+|--------------|---------|-----|
+| **Testing private methods** | `spyOn(obj, 'privateMethod')` | Test public interface instead |
+| **Interdependent tests** | `test1` sets `globalState`, `test2` uses it | Use `beforeEach` for setup |
+| **Brittle tests** | Break when refactoring variable names | Test behavior, not implementation |
+| **Flaky tests** | Fail intermittently on CI | Mock time, use transactions |
+| **No assertions** | `it('should load data', async () => { await fn(); })` | Add assertions |
+| **Copy-pasted tests** | Same login code in 10 tests | Extract to `loginAsUser()` helper |
+| **Tautological assertions** | `expect(x).toEqual(x)` | Use specific oracle values |
+| **Over-mocking** | Mock everything including your own code | Only mock external services |
+| **Under-mocking** | Tests fail randomly due to real API calls | Mock all external services |
+| **Slow tests** | Single unit test takes >5 seconds | Mock I/O, use fake timers |
+
+---
+
+## Summary: The 5 Pillars of Test Quality
+
+```
+   🏛️  TEST QUALITY  🏛️
+   
+   🔵 Observable Behavior
+   (not implementation details)
+            ↓
+   🟢 Meaningful Assertions  
+   (spec-validated oracles)
+            ↓
+   🟡 Single Responsibility
+   (one thing per test)
+            ↓
+   🟣 Speed & Determinism
+   (fast, reproducible)
+            ↓
+   🔴 Mutation Testing
+   (75% score minimum)
+```
+
+These 5 pillars transform tests from "checking code runs" to "verifying code is correct".
+
+---
 
 **Frontend Unit Tests (React 18 + React Testing Library):**
 ```typescript
@@ -599,7 +1282,73 @@ describe('TokenService', () => {
 
 ---
 
-### Section 7: Integration Testing Standards
+### Section 8: Unit Testing Standards (Jest)
+
+**Frontend Unit Tests (React 18 + React Testing Library):**
+```typescript
+// ✅ GOOD: Test user behavior, not implementation
+it('LoginPage should submit credentials on button click', () => {
+  render(<LoginPage />);
+  const button = screen.getByRole('button', { name: /login/i });
+  fireEvent.click(button);
+  expect(mockOnSubmit).toHaveBeenCalled();
+});
+
+// ❌ BAD: Tests implementation details
+it('LoginPage should call setIsLoading with true', () => {
+  // Don't test state management; test behavior
+});
+```
+
+**Jest Configuration (All Projects):**
+- `jest.config.ts` with TypeScript support (`ts-jest`)
+- Coverage threshold: `{ lines: 80, branches: 75, functions: 80, statements: 80 }`
+- Test environment: `node` (backend), `jsdom` (frontend)
+- Setup files: Test utilities, global test configuration
+- Timeout: 30 seconds per test (increase only if justified)
+
+**Unit Test Structure:**
+```typescript
+describe('TokenService', () => {
+  describe('generateToken', () => {
+    it('should return valid JWT with 30-minute expiry', () => {
+      // Arrange
+      const payload: TokenPayload = { userId: '123', email: 'user@example.com', role: 'SUBMITTER' };
+      
+      // Act
+      const token = TokenService.generateToken(payload);
+      
+      // Assert
+      const decoded = TokenService.verifyToken(token);
+      expect(decoded.userId).toBe('123');
+      expect(decoded.exp - decoded.iat).toBe(1800); // 30 minutes
+    });
+
+    it('should throw InvalidTokenError with missing payload', () => {
+      expect(() => TokenService.generateToken(null as any)).toThrow(InvalidTokenError);
+    });
+  });
+});
+```
+
+**Requirements for Unit Tests:**
+- [ ] Test only ONE thing per test (single assertion focus)
+- [ ] Use descriptive test names: `should [action] when [condition]`
+- [ ] Arrange-Act-Assert pattern
+- [ ] No external dependencies; mock everything (APIs, database, time)
+- [ ] Fast execution: <100ms per test
+- [ ] Use `jest.mock()` for dependencies
+- [ ] Test error cases: happy path + edge cases + error cases
+
+**Mocking Strategies:**
+- Pure functions: No mocking needed
+- External APIs: Mock with `jest.mock()` or `jest-mock-extended`
+- Database: Mock Prisma client with `jest.mock('@prisma/client')`
+- Time: Use `jest.useFakeTimers()` for time-dependent code
+
+---
+
+### Section 9: Integration Testing Standards
 
 **Backend Integration Tests (Express + Prisma + PostgreSQL):**
 ```typescript
@@ -675,7 +1424,7 @@ describe('POST /api/auth/callback', () => {
 
 ---
 
-### Section 8: E2E Testing Standards (Critical Workflows Only)
+### Section 10: E2E Testing Standards (Critical Workflows Only)
 
 **E2E Tests - Happy Path Only:**
 ```typescript
@@ -728,7 +1477,7 @@ describe('Authentication Flow - E2E (Happy Path)', () => {
 
 ---
 
-### Section 9: Mocking, Fixtures & Test Data
+### Section 11: Advanced Mocking Patterns & Fixtures
 
 **Mocking Strategy (Hierarchy):**
 1. **Avoid mocking:** If possible, test real code (prefer integration tests)
@@ -784,7 +1533,7 @@ beforeEach(async () => {
 
 ---
 
-### Section 10: Test Organization & Structure
+### Section 12: Test Organization & Structure
 
 **File Structure:**
 ```
@@ -855,7 +1604,7 @@ export async function seedTestUser(overrides = {}) {
 
 ---
 
-### Section 11: Testing in CI/CD Pipeline
+### Section 13: Testing in CI/CD Pipeline
 
 **GitHub Actions Test Workflow:**
 ```yaml
