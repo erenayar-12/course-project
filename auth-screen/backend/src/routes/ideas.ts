@@ -3,7 +3,9 @@ import { default as multer } from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthRequest, authMiddleware } from '../middleware/auth.js';
+import { roleCheck } from '../middleware/roleCheck.js';
 import { ideasService } from '../services/ideas.service.js';
+import { evaluationService } from '../services/evaluation.service.js';
 import { ideasSchema, updateIdeaSchema, paginationSchema, fileUploadSchema } from '../types/ideaSchema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import fs from 'fs';
@@ -262,6 +264,127 @@ router.post(
       res.status(statusCode).json({
         success: false,
         message: err.message || 'Failed to upload file',
+      });
+    }
+  }
+);
+
+/**
+ * STORY-1.4 AC4: Evaluation endpoints with role validation
+ * POST /api/ideas/:id/evaluate - Submit idea evaluation (evaluator/admin only)
+ * GET /api/ideas/:id/evaluation-history - Get evaluation history (evaluator/admin only)
+ * POST /api/evaluation-queue/bulk-status-update - Bulk status update (evaluator/admin only)
+ */
+
+router.post(
+  '/:id/evaluate',
+  authMiddleware,
+  roleCheck(['evaluator', 'admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status, comments, fileUrl } = req.body;
+      const externalId = req.user?.sub || 'unknown';
+
+      if (!status || !comments) {
+        return res.status(400).json({
+          success: false,
+          message: 'Status and comments are required',
+        });
+      }
+
+      const validStatuses = ['accepted', 'rejected', 'needs_revision'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        });
+      }
+
+      const evaluation = await evaluationService.submitEvaluation(id, externalId, {
+        ideaId: id,
+        status,
+        comments,
+        fileUrl,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Evaluation submitted successfully',
+        data: evaluation,
+      });
+    } catch (err: any) {
+      const statusCode = err.message.includes('not found') ? 404 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Failed to submit evaluation',
+      });
+    }
+  }
+);
+
+router.get(
+  '/:id/evaluation-history',
+  authMiddleware,
+  roleCheck(['evaluator', 'admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const history = await evaluationService.getEvaluationHistory(id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Evaluation history retrieved successfully',
+        data: history,
+      });
+    } catch (err: any) {
+      const statusCode = err.message.includes('not found') ? 404 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Failed to retrieve evaluation history',
+      });
+    }
+  }
+);
+
+/**
+ * STORY-2.3b AC15: Bulk operations with role validation
+ * POST /api/evaluation-queue/bulk-status-update - Bulk status update (evaluator/admin only)
+ */
+
+router.post(
+  '/evaluation-queue/bulk-status-update',
+  authMiddleware,
+  roleCheck(['evaluator', 'admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { ideaIds, status } = req.body;
+      const externalId = req.user?.sub || 'unknown';
+
+      if (!Array.isArray(ideaIds) || ideaIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'ideaIds must be a non-empty array',
+        });
+      }
+
+      const result = await evaluationService.bulkStatusUpdate(
+        ideaIds,
+        status,
+        externalId
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Bulk status update completed',
+        data: result,
+      });
+    } catch (err: any) {
+      const statusCode = err.message.includes('limited to') ? 400 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: err.message || 'Failed to update statuses',
       });
     }
   }
