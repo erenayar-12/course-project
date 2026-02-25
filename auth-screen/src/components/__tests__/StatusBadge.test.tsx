@@ -7,7 +7,6 @@
  * @file Unit tests for StatusBadge.tsx
  */
 
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { StatusBadge } from '../StatusBadge';
 import '@testing-library/jest-dom';

@@ -68,7 +68,7 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
     try {
       // 1. Submit idea form data
       const ideaResponse = await ideasService.submitIdea(data);
-      const ideaId = ideaResponse.data.id;
+      const ideaId = ideaResponse.id;
 
       // 2. If file selected, upload it
       if (selectedFile) {

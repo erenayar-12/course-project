@@ -19,17 +19,21 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IdeaListItem } from '../components/IdeaListItem';
 import { IdeaStatsBar } from '../components/IdeaStatsBar';
+import { IdeaStatusFilter, type IdeaStatus } from '../components/IdeaStatusFilter';
+import { IdeaSortDropdown, type SortBy, type SortOrder } from '../components/IdeaSortDropdown';
+import { FilterChips } from '../components/FilterChips';
+import { EmptyResultsState } from '../components/EmptyResultsState';
 import {
   calculatePaginatedIdeas,
-  sortIdeasByDate,
   calculateDashboardStatistics,
   calculatePaginationState,
   type PaginationState,
   type DashboardStatistics,
 } from '../utils/dashboardUtils';
+import { applyFiltersAndSort } from '../utils/filterSortUtils';
 
 interface Idea {
   id: string;
@@ -48,13 +52,31 @@ const ITEMS_PER_PAGE = 10;
  */
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // State for ideas data
   const [allIdeas, setAllIdeas] = useState<Idea[]>([]);
   const [sortedAndPaginatedIdeas, setSortedAndPaginatedIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationState, setPaginationState] = useState<PaginationState | null>(null);
   const [stats, setStats] = useState<DashboardStatistics | null>(null);
+
+  // State for filters/sort from URL parameters
+  const [selectedStatus, setSelectedStatus] = useState<IdeaStatus>(() => {
+    const status = searchParams.get('status') as IdeaStatus | null;
+    return status || 'ALL';
+  });
+  const [sortBy, setSortBy] = useState<SortBy>(() => {
+    return (searchParams.get('sortBy') as SortBy) || 'createdAt';
+  });
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
+    return (searchParams.get('sortOrder') as SortOrder) || 'DESC';
+  });
 
   /**
    * Fetch user's ideas from API
@@ -79,12 +101,11 @@ export const UserDashboard: React.FC = () => {
       const data = await response.json();
       const ideas = data.ideas || [];
 
-      // AC5: Sort by createdAt DESC (newest first)
-      const sorted = sortIdeasByDate(ideas as any, 'DESC') as Idea[];
-      setAllIdeas(sorted);
+      // Store raw ideas (filtering/sorting applied in useEffect)
+      setAllIdeas(ideas);
 
       // AC6: Calculate statistics
-      const calculatedStats = calculateDashboardStatistics(sorted);
+      const calculatedStats = calculateDashboardStatistics(ideas);
       setStats(calculatedStats);
 
       // Update pagination for page 1
@@ -108,14 +129,77 @@ export const UserDashboard: React.FC = () => {
       return;
     }
 
-    // Calculate pagination state
-    const pagination = calculatePaginationState(allIdeas.length, currentPage, ITEMS_PER_PAGE);
+    // Apply filters and sort to all ideas
+    setFilterLoading(true);
+    const status = selectedStatus === 'ALL' ? undefined : (selectedStatus as Exclude<IdeaStatus, 'ALL'>);
+    const filtered = applyFiltersAndSort(allIdeas, status, sortBy, sortOrder);
+
+    // Calculate pagination state based on filtered results
+    const pagination = calculatePaginationState(filtered.length, currentPage, ITEMS_PER_PAGE);
     setPaginationState(pagination);
 
     // Get paginated subset
-    const paginated = calculatePaginatedIdeas(allIdeas as any, currentPage, ITEMS_PER_PAGE) as Idea[];
+    const paginated = calculatePaginatedIdeas(filtered as any, currentPage, ITEMS_PER_PAGE) as Idea[];
     setSortedAndPaginatedIdeas(paginated);
-  }, [allIdeas, currentPage]);
+    setFilterLoading(false);
+  }, [allIdeas, currentPage, selectedStatus, sortBy, sortOrder]);
+
+  /**
+   * Handle status filter change and update URL
+   */
+  const handleStatusChange = (newStatus: IdeaStatus) => {
+    setSelectedStatus(newStatus);
+    setCurrentPage(1); // Reset to page 1
+
+    // Update URL parameters
+    const params = new URLSearchParams(searchParams);
+    if (newStatus === 'ALL') {
+      params.delete('status');
+    } else {
+      params.set('status', newStatus);
+    }
+    setSearchParams(params, { replace: true });
+  };
+
+  /**
+   * Handle sort change and update URL
+   */
+  const handleSortChange = (newSortBy: SortBy, newSortOrder: SortOrder) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    setCurrentPage(1); // Reset to page 1
+
+    // Update URL parameters
+    const params = new URLSearchParams(searchParams);
+    params.set('sortBy', newSortBy);
+    params.set('sortOrder', newSortOrder);
+    setSearchParams(params, { replace: true });
+  };
+
+  /**
+   * Clear all filters and sort
+   */
+  const handleClearAll = () => {
+    setSelectedStatus('ALL');
+    setSortBy('createdAt');
+    setSortOrder('DESC');
+    setCurrentPage(1);
+    setSearchParams({}, { replace: true });
+  };
+
+  /**
+   * Remove status filter
+   */
+  const handleRemoveStatus = () => {
+    handleStatusChange('ALL');
+  };
+
+  /**
+   * Remove sort (reset to default)
+   */
+  const handleRemoveSort = () => {
+    handleSortChange('createdAt', 'DESC');
+  };
 
   /**
    * Fetch ideas on component mount
@@ -223,7 +307,7 @@ export const UserDashboard: React.FC = () => {
           <IdeaStatsBar
             stats={{
               draft: stats.totalIdeas - stats.approvedCount - stats.rejectedCount - stats.pendingReviewCount,
-              submitted: 0, // Placeholder - would need more detailed data
+              submitted: 0, // Placeholder
               underReview: stats.pendingReviewCount,
               approved: stats.approvedCount,
               rejected: stats.rejectedCount,
@@ -231,56 +315,92 @@ export const UserDashboard: React.FC = () => {
           />
         )}
 
-        {/* AC1, AC2, AC7: Ideas Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Title</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date Submitted</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Attachments</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedAndPaginatedIdeas.map((idea) => (
-                <IdeaListItem key={idea.id} idea={idea} onNavigate={handleNavigateToIdea} />
-              ))}
-            </tbody>
-          </table>
+        {/* STORY-2.4 AC1, AC2: Filter and Sort Controls */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <IdeaStatusFilter
+              selectedStatus={selectedStatus}
+              onChange={handleStatusChange}
+              disabled={filterLoading}
+            />
+            <IdeaSortDropdown
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onChange={handleSortChange}
+              disabled={filterLoading}
+            />
+          </div>
+
+          {/* STORY-2.4 AC6, AC7: Filter Chips and Clear All */}
+          <FilterChips
+            activeStatus={selectedStatus === 'ALL' ? undefined : (selectedStatus as Exclude<IdeaStatus, 'ALL'>)}
+            activeSortBy={sortBy !== 'createdAt' || sortOrder !== 'DESC' ? sortBy : undefined}
+            activeSortOrder={sortBy !== 'createdAt' || sortOrder !== 'DESC' ? sortOrder : undefined}
+            onRemoveStatus={handleRemoveStatus}
+            onRemoveSort={handleRemoveSort}
+            onClearAll={handleClearAll}
+          />
+
+          {filterLoading && <p className="text-sm text-gray-500 mt-4">Filtering ideas...</p>}
         </div>
 
-        {/* AC5: Pagination Controls */}
-        {paginationState && (
-          <div className="mt-8 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Showing {paginationState.startItem} to {paginationState.endItem} of {paginationState.totalItems} ideas
+        {/* STORY-2.4 AC11: Empty results state or ideas table */}
+        {sortedAndPaginatedIdeas.length === 0 ? (
+          <EmptyResultsState hasFilters={selectedStatus !== 'ALL'} onClearFilters={handleClearAll} />
+        ) : (
+          <>
+            {/* AC1, AC2, AC7: Ideas Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Title</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Category</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date Submitted</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Attachments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAndPaginatedIdeas.map((idea) => (
+                    <IdeaListItem key={idea.id} idea={idea} onNavigate={handleNavigateToIdea} />
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={!paginationState.canGoPrev}
-                data-testid="pagination-prev"
-                className="px-4 py-2 rounded-md bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Previous
-              </button>
-              <div className="px-4 py-2 flex items-center">
-                <span className="text-sm font-medium text-gray-900">
-                  Page {paginationState.currentPage} of {paginationState.totalPages}
-                </span>
+
+            {/* AC5: Pagination Controls */}
+            {paginationState && (
+              <div className="mt-8 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {paginationState.startItem} to {paginationState.endItem} of {paginationState.totalItems} ideas
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!paginationState.canGoPrev}
+                    data-testid="pagination-prev"
+                    className="px-4 py-2 rounded-md bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <div className="px-4 py-2 flex items-center">
+                    <span className="text-sm font-medium text-gray-900">
+                      Page {paginationState.currentPage} of {paginationState.totalPages}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!paginationState.canGoNext}
+                    data-testid="pagination-next"
+                    className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={!paginationState.canGoNext}
-                data-testid="pagination-next"
-                className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -40,14 +40,39 @@ interface Idea {
  * aggregateStatuses(ideas) // { draft: 2, submitted: 0, underReview: 0, approved: 1, rejected: 0 }
  */
 export function aggregateStatuses(ideas: Idea[]): IdeaStatusCounts {
-  // TODO: Count each status and return object
-  return {
+  const counts: IdeaStatusCounts = {
     draft: 0,
     submitted: 0,
     underReview: 0,
     approved: 0,
     rejected: 0,
   };
+
+  if (!ideas || ideas.length === 0) {
+    return counts;
+  }
+  
+  ideas.forEach((idea) => {
+    switch (idea.status) {
+      case 'DRAFT':
+        counts.draft += 1;
+        break;
+      case 'SUBMITTED':
+        counts.submitted += 1;
+        break;
+      case 'UNDER_REVIEW':
+        counts.underReview += 1;
+        break;
+      case 'APPROVED':
+        counts.approved += 1;
+        break;
+      case 'REJECTED':
+        counts.rejected += 1;
+        break;
+    }
+  });
+  
+  return counts;
 }
 
 /**

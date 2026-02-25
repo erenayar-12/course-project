@@ -55,7 +55,7 @@ describe('EvaluationModal', () => {
 
       // Check for all three status options
       const options = screen.getAllByRole('option');
-      const optionTexts = options.map((o: any) => o.textContent);
+      const optionTexts = options.map((o: HTMLElement) => o.textContent);
       expect(optionTexts).toContain('ACCEPTED');
       expect(optionTexts).toContain('REJECTED');
       expect(optionTexts).toContain('NEEDS_REVISION');

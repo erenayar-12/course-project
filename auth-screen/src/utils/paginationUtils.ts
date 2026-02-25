@@ -5,6 +5,8 @@
  * Used to support AC5: Pagination controls with proper offset calculations
  */
 
+const ITEMS_PER_PAGE = 10;
+
 /**
  * Calculate API offset based on page number (1-indexed)
  * @param page - Page number (1-indexed)
@@ -13,8 +15,7 @@
  * @example calculatePageOffset(2) // 10
  */
 export function calculatePageOffset(page: number): number {
-  // TODO: Implement (page - 1) * 10
-  return 0;
+  return (page - 1) * ITEMS_PER_PAGE;
 }
 
 /**
@@ -26,8 +27,7 @@ export function calculatePageOffset(page: number): number {
  * @example calculateTotalPages(25) // 3
  */
 export function calculateTotalPages(totalIdeas: number): number {
-  // TODO: Implement Math.ceil(totalIdeas / 10)
-  return 1;
+  return Math.ceil(totalIdeas / ITEMS_PER_PAGE);
 }
 
 /**
@@ -39,6 +39,5 @@ export function calculateTotalPages(totalIdeas: number): number {
  * @example isLastPage(2, 3) // false
  */
 export function isLastPage(currentPage: number, totalPages: number): boolean {
-  // TODO: Implement currentPage === totalPages
-  return false;
+  return currentPage >= totalPages;
 }
