@@ -17,40 +17,45 @@ describe('StatusBadge', () => {
     // UT-2.3a-011
     it('should render DRAFT status with yellow background', () => {
       render(<StatusBadge status="DRAFT" />);
-      const badge = screen.getByText('Draft');
+      const badge = screen.getByTestId('status-badge');
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement).toHaveClass('bg-yellow-100');
+      expect(badge).toHaveClass('bg-yellow-100');
+      expect(badge).toHaveTextContent('Draft');
     });
 
     // UT-2.3a-012
     it('should render SUBMITTED status with blue background', () => {
       render(<StatusBadge status="SUBMITTED" />);
-      const badge = screen.getByText('Submitted');
+      const badge = screen.getByTestId('status-badge');
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement).toHaveClass('bg-blue-100');
+      expect(badge).toHaveClass('bg-blue-100');
+      expect(badge).toHaveTextContent('Submitted');
     });
 
     // UT-2.3a-013
     it('should render UNDER_REVIEW status with orange background', () => {
       render(<StatusBadge status="UNDER_REVIEW" />);
-      const badge = screen.getByText('Under Review');
+      const badge = screen.getByTestId('status-badge');
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement).toHaveClass('bg-orange-100');
+      expect(badge).toHaveClass('bg-orange-100');
+      expect(badge).toHaveTextContent('Under Review');
     });
 
     // UT-2.3a-014
     it('should render APPROVED status with green background', () => {
       render(<StatusBadge status="APPROVED" />);
-      const badge = screen.getByText('Approved');
+      const badge = screen.getByTestId('status-badge');
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement).toHaveClass('bg-green-100');
+      expect(badge).toHaveClass('bg-green-100');
+      expect(badge).toHaveTextContent('Approved');
     });
 
     it('should render REJECTED status with red background', () => {
       render(<StatusBadge status="REJECTED" />);
-      const badge = screen.getByText('Rejected');
+      const badge = screen.getByTestId('status-badge');
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement).toHaveClass('bg-red-100');
+      expect(badge).toHaveClass('bg-red-100');
+      expect(badge).toHaveTextContent('Rejected');
     });
 
     it('should render as a badge component with proper styling', () => {
