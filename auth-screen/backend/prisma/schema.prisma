@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  externalId String  @unique // Auth0 sub
+  email     String
+  name      String
+  role      String   @default("USER") // USER, EVALUATOR, ADMIN
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ideas       Idea[]
+  attachments IdeaAttachment[] @relation("uploadedBy")
+}
+
+model Idea {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(100)
+  description String
+  category    String   // PRODUCT, PROCESS, MARKETING, OTHER
+  status      String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attachments IdeaAttachment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+}
+
+model IdeaAttachment {
+  id            String   @id @default(cuid())
+  ideaId        String
+  idea          Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  originalName  String
+  storedName    String   @unique
+  fileSize      Int
+  mimeType      String
+  uploadedBy    String
+  uploadedByUser User    @relation("uploadedBy", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploadedAt    DateTime @default(now())
+
+  @@index([ideaId])
+  @@index([uploadedBy])
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1772013961565" clover="3.2.0">
-  <project timestamp="1772013961565" name="All files">
-    <metrics statements="371" coveredstatements="225" conditionals="155" coveredconditionals="70" methods="59" coveredmethods="32" elements="585" coveredelements="327" complexity="0" loc="371" ncloc="371" packages="12" files="22" classes="22"/>
+<coverage generated="1772015783737" clover="3.2.0">
+  <project timestamp="1772015783738" name="All files">
+    <metrics statements="482" coveredstatements="302" conditionals="218" coveredconditionals="117" methods="78" coveredmethods="44" elements="778" coveredelements="463" complexity="0" loc="482" ncloc="482" packages="12" files="26" classes="26"/>
     <package name="src">
       <metrics statements="21" coveredstatements="21" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="3"/>
       <file name="App.tsx" path="D:\labs\course-project\auth-screen\src\App.tsx">
@@ -91,7 +91,44 @@
       </file>
     </package>
     <package name="src.components">
-      <metrics statements="90" coveredstatements="71" conditionals="67" coveredconditionals="46" methods="15" coveredmethods="11"/>
+      <metrics statements="148" coveredstatements="104" conditionals="109" coveredconditionals="75" methods="26" coveredmethods="19"/>
+      <file name="FileProgressBar.tsx" path="D:\labs\course-project\auth-screen\src\components\FileProgressBar.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="3" coveredconditionals="3" methods="1" coveredmethods="1"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="14" count="61" type="cond" truecount="1" falsecount="0"/>
+        <line num="16" count="26" type="stmt"/>
+      </file>
+      <file name="FileUploadInput.tsx" path="D:\labs\course-project\auth-screen\src\components\FileUploadInput.tsx">
+        <metrics statements="27" coveredstatements="21" conditionals="22" coveredconditionals="16" methods="9" coveredmethods="7"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="2" count="3" type="stmt"/>
+        <line num="11" count="3" type="stmt"/>
+        <line num="17" count="52" type="stmt"/>
+        <line num="18" count="52" type="stmt"/>
+        <line num="20" count="52" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="24" count="52" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="cond" truecount="1" falsecount="0"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="31" count="52" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="35" count="52" type="stmt"/>
+        <line num="36" count="0" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+        <line num="38" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="39" count="0" type="stmt"/>
+        <line num="43" count="52" type="stmt"/>
+        <line num="44" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="49" count="52" type="stmt"/>
+        <line num="69" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="70" count="1" type="stmt"/>
+        <line num="87" count="1" type="stmt"/>
+        <line num="102" count="0" type="cond" truecount="0" falsecount="3"/>
+        <line num="103" count="0" type="stmt"/>
+      </file>
       <file name="FormSelect.tsx" path="D:\labs\course-project\auth-screen\src\components\FormSelect.tsx">
         <metrics statements="8" coveredstatements="8" conditionals="13" coveredconditionals="8" methods="2" coveredmethods="2"/>
         <line num="6" count="2" type="stmt"/>
@@ -125,7 +162,7 @@
         <line num="83" count="2" type="stmt"/>
       </file>
       <file name="IdeaSubmissionForm.tsx" path="D:\labs\course-project\auth-screen\src\components\IdeaSubmissionForm.tsx">
-        <metrics statements="38" coveredstatements="31" conditionals="12" coveredconditionals="9" methods="6" coveredmethods="5"/>
+        <metrics statements="65" coveredstatements="39" conditionals="29" coveredconditionals="19" methods="7" coveredmethods="5"/>
         <line num="16" count="2" type="stmt"/>
         <line num="17" count="2" type="stmt"/>
         <line num="18" count="2" type="stmt"/>
@@ -135,35 +172,62 @@
         <line num="22" count="2" type="stmt"/>
         <line num="23" count="2" type="stmt"/>
         <line num="24" count="2" type="stmt"/>
-        <line num="36" count="2" type="stmt"/>
-        <line num="37" count="33" type="stmt"/>
-        <line num="38" count="33" type="stmt"/>
-        <line num="39" count="33" type="stmt"/>
-        <line num="47" count="33" type="stmt"/>
-        <line num="56" count="33" type="stmt"/>
-        <line num="57" count="1" type="stmt"/>
-        <line num="58" count="1" type="stmt"/>
-        <line num="60" count="1" type="stmt"/>
-        <line num="61" count="1" type="stmt"/>
-        <line num="64" count="0" type="stmt"/>
-        <line num="67" count="0" type="stmt"/>
-        <line num="68" count="0" type="stmt"/>
-        <line num="69" count="0" type="stmt"/>
-        <line num="72" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="73" count="0" type="stmt"/>
-        <line num="75" count="0" type="stmt"/>
-        <line num="83" count="33" type="stmt"/>
-        <line num="84" count="3" type="cond" truecount="1" falsecount="0"/>
-        <line num="85" count="1" type="stmt"/>
-        <line num="86" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="88" count="2" type="stmt"/>
-        <line num="89" count="2" type="stmt"/>
-        <line num="95" count="33" type="stmt"/>
-        <line num="96" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="97" count="1" type="stmt"/>
-        <line num="101" count="33" type="stmt"/>
-        <line num="141" count="132" type="stmt"/>
-        <line num="186" count="2" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="40" count="33" type="stmt"/>
+        <line num="41" count="33" type="stmt"/>
+        <line num="42" count="33" type="stmt"/>
+        <line num="43" count="33" type="stmt"/>
+        <line num="44" count="33" type="stmt"/>
+        <line num="45" count="33" type="stmt"/>
+        <line num="46" count="33" type="stmt"/>
+        <line num="54" count="33" type="stmt"/>
+        <line num="63" count="33" type="stmt"/>
+        <line num="64" count="1" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="68" count="1" type="stmt"/>
+        <line num="70" count="1" type="stmt"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="74" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="76" count="0" type="stmt"/>
+        <line num="77" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="78" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="79" count="0" type="stmt"/>
+        <line num="80" count="0" type="stmt"/>
+        <line num="83" count="0" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
+        <line num="85" count="0" type="stmt"/>
+        <line num="86" count="0" type="stmt"/>
+        <line num="89" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="90" count="0" type="stmt"/>
+        <line num="91" count="0" type="stmt"/>
+        <line num="92" count="0" type="stmt"/>
+        <line num="93" count="0" type="stmt"/>
+        <line num="98" count="0" type="stmt"/>
+        <line num="101" count="0" type="stmt"/>
+        <line num="102" count="0" type="stmt"/>
+        <line num="103" count="0" type="stmt"/>
+        <line num="104" count="0" type="stmt"/>
+        <line num="105" count="0" type="stmt"/>
+        <line num="108" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="109" count="0" type="stmt"/>
+        <line num="111" count="0" type="stmt"/>
+        <line num="112" count="0" type="stmt"/>
+        <line num="120" count="33" type="stmt"/>
+        <line num="121" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="122" count="1" type="stmt"/>
+        <line num="123" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="125" count="2" type="stmt"/>
+        <line num="126" count="2" type="stmt"/>
+        <line num="132" count="33" type="stmt"/>
+        <line num="133" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="134" count="1" type="stmt"/>
+        <line num="138" count="33" type="stmt"/>
+        <line num="178" count="132" type="stmt"/>
+        <line num="238" count="2" type="stmt"/>
       </file>
       <file name="Navbar.tsx" path="D:\labs\course-project\auth-screen\src\components\Navbar.tsx">
         <metrics statements="8" coveredstatements="7" conditionals="4" coveredconditionals="3" methods="2" coveredmethods="1"/>
@@ -428,7 +492,43 @@
       </file>
     </package>
     <package name="src.services">
-      <metrics statements="33" coveredstatements="11" conditionals="14" coveredconditionals="1" methods="4" coveredmethods="3"/>
+      <metrics statements="66" coveredstatements="43" conditionals="32" coveredconditionals="18" methods="7" coveredmethods="6"/>
+      <file name="file.service.ts" path="D:\labs\course-project\auth-screen\src\services\file.service.ts">
+        <metrics statements="33" coveredstatements="32" conditionals="18" coveredconditionals="17" methods="3" coveredmethods="3"/>
+        <line num="6" count="3" type="stmt"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
+        <line num="41" count="13" type="stmt"/>
+        <line num="42" count="13" type="stmt"/>
+        <line num="44" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="46" count="13" type="cond" truecount="1" falsecount="0"/>
+        <line num="47" count="1" type="stmt"/>
+        <line num="50" count="12" type="stmt"/>
+        <line num="51" count="12" type="stmt"/>
+        <line num="60" count="4" type="cond" truecount="3" falsecount="0"/>
+        <line num="61" count="4" type="stmt"/>
+        <line num="64" count="4" type="stmt"/>
+        <line num="72" count="8" type="stmt"/>
+        <line num="74" count="8" type="stmt"/>
+        <line num="76" count="4" type="cond" truecount="1" falsecount="0"/>
+        <line num="77" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="78" count="1" type="stmt"/>
+        <line num="79" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="83" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="85" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="86" count="1" type="stmt"/>
+        <line num="89" count="0" type="stmt"/>
+        <line num="97" count="12" type="stmt"/>
+        <line num="98" count="12" type="stmt"/>
+        <line num="108" count="12" type="cond" truecount="1" falsecount="0"/>
+        <line num="109" count="2" type="stmt"/>
+        <line num="110" count="2" type="stmt"/>
+        <line num="113" count="10" type="cond" truecount="1" falsecount="0"/>
+        <line num="114" count="1" type="stmt"/>
+        <line num="120" count="9" type="stmt"/>
+      </file>
       <file name="ideas.service.ts" path="D:\labs\course-project\auth-screen\src\services\ideas.service.ts">
         <metrics statements="33" coveredstatements="11" conditionals="14" coveredconditionals="1" methods="4" coveredmethods="3"/>
         <line num="7" count="2" type="stmt"/>
@@ -467,7 +567,30 @@
       </file>
     </package>
     <package name="src.types">
-      <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <metrics statements="23" coveredstatements="15" conditionals="3" coveredconditionals="1" methods="5" coveredmethods="1"/>
+      <file name="fileSchema.ts" path="D:\labs\course-project\auth-screen\src\types\fileSchema.ts">
+        <metrics statements="20" coveredstatements="12" conditionals="3" coveredconditionals="1" methods="5" coveredmethods="1"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="16" count="3" type="stmt"/>
+        <line num="18" count="3" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="36" count="3" type="stmt"/>
+        <line num="37" count="5" type="cond" truecount="1" falsecount="0"/>
+        <line num="38" count="4" type="stmt"/>
+        <line num="39" count="4" type="stmt"/>
+        <line num="40" count="4" type="stmt"/>
+        <line num="41" count="4" type="stmt"/>
+        <line num="47" count="3" type="stmt"/>
+        <line num="48" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="52" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="53" count="0" type="stmt"/>
+        <line num="56" count="0" type="stmt"/>
+      </file>
       <file name="ideaSchema.ts" path="D:\labs\course-project\auth-screen\src\types\ideaSchema.ts">
         <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="8" count="4" type="stmt"/>
