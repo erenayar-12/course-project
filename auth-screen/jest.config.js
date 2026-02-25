@@ -5,17 +5,21 @@ export default {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts?(x)', '**/*.test.ts?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   maxWorkers: 1,
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
+        isolatedModules: true,
         tsconfig: {
           jsx: 'react-jsx',
           jsxImportSource: 'react',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
-          module: 'es2020',
+          module: 'esnext',
           target: 'ES2020',
           lib: ['ES2020', 'DOM', 'DOM.Iterable'],
           moduleResolution: 'node',

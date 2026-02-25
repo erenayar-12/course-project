@@ -19,13 +19,22 @@
     "test:coverage": "jest --coverage",
     "test:coverage:report": "jest --coverage && open coverage/lcov-report/index.html || start coverage/lcov-report/index.html",
     "mutation:test": "stryker run",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "cypress:run:spec": "cypress run --spec cypress/e2e/idea-submission.cy.ts",
+    "cypress:headless": "cypress run --headless",
     "ci": "npm run type-check && npm run lint && npm run test:coverage && npm run mutation:test"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
+    "@hookform/resolvers": "^5.2.2",
+    "axios": "^1.13.5",
+    "msw": "^2.12.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0"
+    "react-hook-form": "^7.71.2",
+    "react-router-dom": "^6.20.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
