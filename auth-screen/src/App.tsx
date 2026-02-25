@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import Dashboard from './pages/Dashboard';
 import EvaluationQueue from './pages/EvaluationQueue';
+import IdeaDetailPage from './pages/IdeaDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import SessionWarningModal from './components/SessionWarningModal';
@@ -43,6 +44,15 @@ const AppRoutes: React.FC = () => (
       element={
         <ProtectedRoute path="/evaluation-queue" requiredRoles={[ROLES.EVALUATOR, ROLES.ADMIN]}>
           <EvaluationQueue />
+        </ProtectedRoute>
+      }
+    />
+
+    <Route
+      path="/ideas/:ideaId"
+      element={
+        <ProtectedRoute path="/ideas/:ideaId">
+          <IdeaDetailPage />
         </ProtectedRoute>
       }
     />
