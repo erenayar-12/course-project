@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useMockAuth0 } from '../context/MockAuth0Context';
 
 /**
  * LoginPage Component
@@ -23,7 +23,7 @@ interface LoginFormData {
 }
 
 const LoginPage: React.FC = () => {
-  const { loginWithRedirect, isLoading, error } = useAuth0();
+  const { loginWithRedirect, isLoading, error } = useMockAuth0();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',

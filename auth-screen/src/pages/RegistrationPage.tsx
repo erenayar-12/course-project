@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useMockAuth0 } from '../context/MockAuth0Context';
 
 /**
  * RegistrationPage Component
@@ -25,7 +25,7 @@ interface RegistrationFormData {
 }
 
 const RegistrationPage: React.FC = () => {
-  const { loginWithRedirect, isLoading, error } = useAuth0();
+  const { loginWithRedirect, isLoading, error } = useMockAuth0();
   const [formData, setFormData] = useState<RegistrationFormData>({
     email: '',
     password: '',
@@ -75,8 +75,8 @@ const RegistrationPage: React.FC = () => {
     }
   };
 
-  const displayError = error || localError ? (error ? 'Registration failed. Please try again.' : localError) : null;
-
+  const displayError =
+    error || localError ? (error ? 'Registration failed. Please try again.' : localError) : null;
   return (
     <main className="responsive min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
@@ -136,7 +136,10 @@ const RegistrationPage: React.FC = () => {
 
           {/* Confirm Password Field */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Confirm Password
               <span className="text-red-500 ml-1">*</span>
             </label>

@@ -3,7 +3,7 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.test.ts?(x)'],
+  testMatch: ['**/__tests__/**/*.test.ts?(x)', '**/*.test.ts?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   maxWorkers: 1,
   transform: {

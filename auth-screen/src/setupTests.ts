@@ -8,14 +8,9 @@ import '@testing-library/jest-dom';
 // Polyfill TextEncoder/TextDecoder for Auth0 SDK in jsdom
 // These are needed for crypto operations in Auth0
 try {
-  // @ts-ignore - require is available in jest/node environment
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { TextEncoder, TextDecoder } = require('util');
   Object.assign(globalThis, { TextEncoder, TextDecoder });
 } catch (e) {
   // Already available in test environment
 }
-
-
-
-
-

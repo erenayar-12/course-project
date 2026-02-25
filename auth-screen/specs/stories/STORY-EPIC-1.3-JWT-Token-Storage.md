@@ -14,7 +14,7 @@
 
 ## Story Context
 
-After Auth0 authenticates a user, we need to securely store the JWT token for subsequent API requests. Auth0 libraries typically handle this automatically, but we need to ensure tokens are stored in secure HTTP-only cookies (not localStorage) to prevent XSS attacks. This story ensures all API requests include the token and tokens are refreshed before expiration.
+After Auth0 authenticates a user, we need to securely store the JWT token for subsequent API requests. Auth0 React SDK typically handles cookie storage automatically, but we must ensure tokens are stored in secure HTTP-only cookies (not localStorage) to prevent XSS attacks. This story implements token management following the project's tech stack: React 18 with TypeScript frontend, Express.js backend with Prisma ORM, PostgreSQL database, Jest testing, and secure OAuth 2.0 patterns. All API requests will include the token via Fetch API interceptor, and tokens will refresh before expiration using Express.js middleware.
 
 ## Acceptance Criteria
 
@@ -43,38 +43,74 @@ After Auth0 authenticates a user, we need to securely store the JWT token for su
 - **When:** Checking browser console and application logs
 - **Then:** Full token value does not appear in console logs; only identifier/claims are logged for debugging
 
+### AC 6: Token Service Tested with Jest + React Testing Library
+- **Given:** `tokenService.ts` and API interceptor code is written
+- **When:** Jest test suite runs (`npm run test:unit`)
+- **Then:** Token refresh logic has 80%+ coverage; interceptor tests mock Fetch API; all tests pass
+
+### AC 7: API Middleware Validates Token in Express Backend
+- **Given:** Express.js API server is running
+- **When:** Request arrives at protected endpoint without Authorization header
+- **Then:** Middleware returns 401 Unauthorized; token rejected if signature invalid or expired
+
 ## Technical Notes
 
 ### Implementation Approach
-- Configure Auth0 to use cookies instead of localStorage
-- Set `useRefreshTokens: true` and `cacheLocation: 'memory'` in Auth0 config
-- Integrate JWT interceptor in API client (Axios/Fetch) to automatically attach token
-- Set up token refresh logic with exponential backoff
-- Use secure, HTTP-only cookie attributes in backend
+- Configure Auth0 React SDK to use secure HTTP-only cookies with `cacheLocation: 'memory'`
+- Use `useRefreshTokens: true` in Auth0 config for automatic token refresh
+- Create `tokenService.ts` with JWT refresh logic and exponential backoff
+- Build API client interceptor using Fetch API (or Axios) to attach Bearer token to all requests
+- Implement token refresh middleware in Express.js backend (or Next.js API routes)
+- Use PostgreSQL + Prisma ORM to track token refresh events in database
+- All token validation handled server-side (no client-side verification)
+- Implement JWT interceptor error handling for 401/403 responses
 
-### Files/Components Affected
-- `src/config/auth0Config.js` - Update with cookie settings
-- `src/services/apiClient.ts` - Add JWT interceptor
-- `src/services/tokenService.ts` - New token refresh logic
-- Backend API middleware - Validate token signature and expiration
+### Files/Components Affected (Frontend)
+- `src/config/auth0Config.ts` - Update Auth0 config with cookie settings
+- `src/services/tokenService.ts` - New token refresh and validation logic
+- `src/services/apiClient.ts` - New Fetch-based API client with interceptors
+- `src/setupTests.ts` - Add token mocking for Jest tests
 
-### Technology Stack
-- Auth0 React SDK (handles cookie storage automatically)
-- Axios or Fetch with interceptors
-- JSON Web Token (JWT) library for verification
+### Files/Components Affected (Backend)
+- `api/middleware/authMiddleware.ts` - JWT verification middleware
+- `api/controllers/tokenController.ts` - Token refresh endpoint
+- `prisma/schema.prisma` - Add token refresh logs/audit table
+- `src/database/migrations/*.sql` - Add token tracking table
+
+### Technology Stack (From agents.md)
+**Frontend:**
+- React 18 with TypeScript
+- Vite build tool
+- Auth0 React SDK
+- Jest + React Testing Library for tests
+- Fetch API for HTTP requests
+
+**Backend:**
+- Node.js v18+
+- Express.js (or Next.js API Routes)
+- TypeScript
+- Prisma ORM
+- PostgreSQL database
+
+**Security:**
+- HTTP-only, Secure, SameSite cookies
+- JWT (Access + Refresh tokens)
+- OAuth 2.0 protocol
 
 ### Known Limitations
-- Token refresh happens server-side (more secure than client-side)
-- No token revocation on logout (token remains valid until expiration, handled in next story)
+- Token refresh happens server-side via Express.js middleware (more secure than client-side)
+- Token revocation not yet implemented; token remains valid until expiration (handled in STORY-EPIC-1.5)
 - Token rotation not yet implemented (Phase 2 security enhancement)
+- Prisma migrations require manual database setup; no automatic migration on deploy
+- Fetch API used (no external HTTP library dependency); requires polyfills for older browsers
 
 ## Estimation & Effort
 
-**Story Points:** 3  
-**Estimated Days:** 0.5 - 1 day  
-**Risk Level:** MEDIUM
+**Story Points:** 5  
+**Estimated Days:** 1.5 - 2 days  
+**Risk Level:** MEDIUM-HIGH
 
-**Estimation Rationale:** Involves configuration and integration points across frontend and backend. Moderate risk because improper token handling can cause security vulnerabilities. Well-documented in Auth0 best practices, but requires careful implementation.
+**Estimation Rationale:** Full-stack implementation (React frontend + Express backend + Prisma migration). Involves security-critical components (JWT handling, token validation, secure cookies). Moderate-high risk because improper token handling can cause security vulnerabilities and session management failures. Well-documented in Auth0 and JWT best practices, but requires careful coordination between frontend/backend and comprehensive testing with Jest.
 
 ## Dependencies & Blockers
 
@@ -96,12 +132,17 @@ After Auth0 authenticates a user, we need to securely store the JWT token for su
 
 ## Definition of Acceptance
 
-- [ ] Token stored in HTTP-only, Secure, SameSite cookie
+- [ ] Token stored in HTTP-only, Secure, SameSite cookie via Auth0 React SDK
 - [ ] Token persists across page refresh with user remaining logged in
-- [ ] All API requests include "Authorization: Bearer [token]" header
-- [ ] Token refresh is triggered before expiration
-- [ ] Expired token results in re-authentication (not app crash)
-- [ ] No sensitive values logged to console
+- [ ] `tokenService.ts` exports `getToken()` and `refreshToken()` functions
+- [ ] API client uses Fetch API with interceptor adding `Authorization: Bearer [token]` header
+- [ ] All API requests include token in header; verified via browser DevTools Network tab
+- [ ] Token refresh triggered before expiration (check `tokenExpiresAt` time)
+- [ ] Expired token results in automatic refresh or redirect to login page
+- [ ] No sensitive values logged to console (use `console.debug()` for claims only)
+- [ ] Jest tests pass with 80%+ coverage for token service and API interceptor
+- [ ] Express.js backend validates JWT signature and expiration
+- [ ] Prisma database schema includes token refresh audit table
 - [ ] Security audit (OWASP) passed: No XSS, No CSRF vulnerabilities
 
 ## Related Information
