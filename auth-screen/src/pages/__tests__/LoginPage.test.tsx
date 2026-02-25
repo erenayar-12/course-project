@@ -18,9 +18,7 @@ import { MockAuth0Provider } from '../../context/MockAuth0Context';
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <MockAuth0Provider>
-      <BrowserRouter>
-        {component}
-      </BrowserRouter>
+      <BrowserRouter>{component}</BrowserRouter>
     </MockAuth0Provider>
   );
 };

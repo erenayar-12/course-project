@@ -37,6 +37,7 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         setUser(JSON.parse(storedUser));
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('Failed to parse stored user:', e);
       }
     }
@@ -88,10 +89,19 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const logout = () => {
+    // AC2: Logout clears all auth data
     localStorage.removeItem('mock_user');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_user');
     setUser(null);
+    setError(null);
+
     // eslint-disable-next-line no-console
     console.log('User logged out');
+
+    // Redirect to login page (AC1: User is redirected to login)
+    window.location.href = '/login?logout=true';
   };
 
   return (

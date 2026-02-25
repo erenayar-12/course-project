@@ -21,7 +21,7 @@ describe('App', () => {
   it('should render MockAuth0Provider wrapping routes', async () => {
     // This is a simplified test that verifies the App structure works
     // without trying to mock all the child components
-    
+
     // 🔵 ARRANGE: Use dynamic import to get App after mocks are set
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const App = require('./App').default;
