@@ -8,8 +8,8 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FilterDrawer } from '../../components/FilterDrawer';
-import { SkeletonLoader } from '../../components/SkeletonLoader';
+import FilterDrawer from '../../components/FilterDrawer';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import '@testing-library/jest-dom';
 
 describe('STORY-2.4: FilterDrawer Component', () => {

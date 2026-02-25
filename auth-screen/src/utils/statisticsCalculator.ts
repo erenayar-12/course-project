@@ -84,7 +84,7 @@ export function aggregateStatuses(ideas: Idea[]): IdeaStatusCounts {
  * calculatePercentages(stats) // { draft: 30, submitted: 20, underReview: 10, approved: 30, rejected: 10 }
  */
 export function calculatePercentages(stats: IdeaStatusCounts): StatusPercentages {
-  // TODO: Calculate (count / total) * 100 for each status, rounded
+  // Calculate (count / total) * 100 for each status, rounded to nearest integer
   // Handle edge case: 0 total ideas
   const total = Object.values(stats).reduce((a, b) => a + b, 0);
   
@@ -99,11 +99,11 @@ export function calculatePercentages(stats: IdeaStatusCounts): StatusPercentages
   }
 
   return {
-    draft: 0,
-    submitted: 0,
-    underReview: 0,
-    approved: 0,
-    rejected: 0,
+    draft: Math.round((stats.draft / total) * 100),
+    submitted: Math.round((stats.submitted / total) * 100),
+    underReview: Math.round((stats.underReview / total) * 100),
+    approved: Math.round((stats.approved / total) * 100),
+    rejected: Math.round((stats.rejected / total) * 100),
   };
 }
 

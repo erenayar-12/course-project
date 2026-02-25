@@ -7,8 +7,8 @@
  * @file Integration tests for Dashboard.tsx
  */
 
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../../pages/Dashboard';
 import * as AuthContext from '../../context/MockAuth0Context';
 
@@ -16,7 +16,7 @@ import * as AuthContext from '../../context/MockAuth0Context';
 jest.mock('../../context/MockAuth0Context');
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  return render(<MemoryRouter>{component}</MemoryRouter>);
 };
 
 describe('Dashboard (Router Component)', () => {
@@ -25,7 +25,7 @@ describe('Dashboard (Router Component)', () => {
   });
 
   describe('authentication', () => {
-    it('should render UserDashboard when user is authenticated', () => {
+    it('should render UserDashboard when user is authenticated', async () => {
       // Mock authenticated user
       (AuthContext.useMockAuth0 as jest.Mock).mockReturnValue({
         user: {
@@ -43,7 +43,10 @@ describe('Dashboard (Router Component)', () => {
 
       // AC11: Dashboard renders for authenticated user
       // UserDashboard should display (look for "My Ideas" or similar header)
-      expect(screen.getByText('My Ideas')).toBeInTheDocument();
+      // Use findByText to wait for async loading to complete
+      await waitFor(() => {
+        expect(screen.getByText('My Ideas')).toBeInTheDocument();
+      }, { timeout: 3000 });
     });
 
     it('should redirect to login when user is not authenticated', () => {
@@ -67,6 +70,7 @@ describe('Dashboard (Router Component)', () => {
       // AC11: Redirect to login for unauthenticated user
       // TODO: Verify router.push('/login') or Navigate component renders
       // For now, just verify component renders without error
+      // Note: May show loading state initially
       expect(screen.getByText('My Ideas')).toBeInTheDocument();
     });
   });

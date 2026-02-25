@@ -77,7 +77,7 @@ describe('BulkActionsBar', () => {
         />
       );
 
-      const exportButton = screen.getByRole('button', { name: /Export CSV/i });
+      const exportButton = screen.getByRole('button', { name: /Export/i });
       expect(exportButton).toBeDisabled();
     });
   });

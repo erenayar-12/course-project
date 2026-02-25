@@ -99,6 +99,7 @@ describe('statisticsCalculator', () => {
 
     it('should handle rounding correctly', () => {
       // 1/3 = 33.33... should round to 33
+      // Note: Due to rounding, sum of 3 items may be 99 instead of 100
       const stats = {
         draft: 1,
         submitted: 1,
@@ -110,7 +111,11 @@ describe('statisticsCalculator', () => {
       const result = calculatePercentages(stats);
       
       // Each should be roughly 33% (accounting for rounding of 3 items)
-      expect(result.draft + result.submitted + result.underReview).toBeCloseTo(100, 0);
+      // Total may be 99 due to rounding (33+33+33)
+      expect(result.draft).toBe(33);
+      expect(result.submitted).toBe(33);
+      expect(result.underReview).toBe(33);
+      expect(result.draft + result.submitted + result.underReview).toBe(99);
     });
 
     it('should handle all ideas in one status', () => {
