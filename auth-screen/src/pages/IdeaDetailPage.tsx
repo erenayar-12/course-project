@@ -72,13 +72,16 @@ const IdeaDetailPage: React.FC = () => {
   const [idea, setIdea] = useState<IdeaDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load idea data on mount
   useEffect(() => {
     const loadIdea = async () => {
       if (!ideaId) {
         setError('Idea ID is required');
+        setErrorCode(400);
         setLoading(false);
         return;
       }
@@ -86,16 +89,26 @@ const IdeaDetailPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        setErrorCode(null);
         const data = await ideasService.getIdeaDetail(ideaId);
         setIdea(data);
       } catch (err) {
         const error = err as any;
-        if (error.response?.status === 403) {
-          setError("You don't have permission to view this idea");
-        } else if (error.response?.status === 404) {
-          setError('Idea not found');
+        const status = error.response?.status || error.status;
+        
+        setErrorCode(status);
+        
+        // User-friendly error messages based on HTTP status
+        if (status === 403) {
+          setError("You don't have permission to view this idea. It may belong to another user.");
+        } else if (status === 404) {
+          setError('Idea not found. It may have been deleted or does not exist.');
+        } else if (status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else if (status >= 500) {
+          setError('Something went wrong on the server. Please try again later.');
         } else {
-          setError(error.message || 'Failed to load idea');
+          setError(error.message || 'Failed to load idea. Please try again.');
         }
       } finally {
         setLoading(false);
@@ -110,13 +123,78 @@ const IdeaDetailPage: React.FC = () => {
     if (!idea) return;
 
     try {
+      setIsDeleting(true);
+      setError(null);
       await ideasService.deleteIdea(idea.id);
+      
+      // Show success feedback before navigating
+      console.log('Idea deleted successfully');
+      
       // Redirect to dashboard after delete
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const error = err as any;
-      setError(error.message || 'Failed to delete idea');
+      const status = error.response?.status || error.status;
+      
+      if (status === 403) {
+        setError("You don't have permission to delete this idea.");
+      } else if (status === 404) {
+        setError('Idea not found. It may have been deleted already.');
+      } else if (status === 401) {
+        setError('Your session has expired. Please log in again.');
+      } else {
+        setError(error.message || 'Failed to delete idea. Please try again.');
+      }
+      
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  // Handle retry for failed loads
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setErrorCode(null);
+    
+    const loadIdea = async () => {
+      if (!ideaId) {
+        setError('Idea ID is required');
+        setErrorCode(400);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        setErrorCode(null);
+        const data = await ideasService.getIdeaDetail(ideaId);
+        setIdea(data);
+      } catch (err) {
+        const error = err as any;
+        const status = error.response?.status || error.status;
+        
+        setErrorCode(status);
+        
+        if (status === 403) {
+          setError("You don't have permission to view this idea. It may belong to another user.");
+        } else if (status === 404) {
+          setError('Idea not found. It may have been deleted or does not exist.');
+        } else if (status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else if (status >= 500) {
+          setError('Something went wrong on the server. Please try again later.');
+        } else {
+          setError(error.message || 'Failed to load idea. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadIdea();
   };
 
   // Handle edit navigation
@@ -168,22 +246,43 @@ const IdeaDetailPage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => navigate(-1)}
-            className="mb-6 text-blue-600 hover:text-blue-800 underline"
+            className="mb-6 text-blue-600 hover:text-blue-800 underline text-sm font-medium"
           >
             ← Back
           </button>
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-900 mb-2">
-              Unable to Load Idea
+              {errorCode === 403 ? 'Access Denied' : errorCode === 404 ? 'Idea Not Found' : errorCode === 401 ? 'Session Expired' : 'Error Loading Idea'}
             </h2>
-            <p className="text-red-700 mb-4">{error}</p>
-            <button
-              onClick={() => navigate('/dashboard', { replace: true })}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Back to Dashboard
-            </button>
+            <p className="text-red-700 mb-6">{error}</p>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              {errorCode !== 401 && (
+                <button
+                  onClick={handleRetry}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm font-medium"
+                >
+                  Try Again
+                </button>
+              )}
+              
+              {errorCode === 401 ? (
+                <button
+                  onClick={() => navigate('/login', { replace: true })}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Go to Login
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/dashboard', { replace: true })}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Back to Dashboard
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -280,24 +379,34 @@ const IdeaDetailPage: React.FC = () => {
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
           <div className="bg-white rounded-lg shadow-lg max-w-md mx-4 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Idea?</h2>
+            <h2 id="delete-modal-title" className="text-xl font-bold text-gray-900 mb-4">Delete Idea?</h2>
             <p className="text-gray-600 mb-6">
               This idea will be deleted and moved to trash. You can recover it within 30 days.
             </p>
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded p-3 mb-6">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition-colors font-medium"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setError(null);
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium"
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Delete Permanently
+                {isDeleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
