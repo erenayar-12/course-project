@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { getUserRole } from './roleCheck.js';
 
 export interface AuthRequest extends Request {
   userId?: string;
   email?: string;
   externalId?: string; // Auth0 sub
-  userRole?: 'submitter' | 'evaluator' | 'admin'; // STORY-1.4 RBAC
 }
 
 export const authMiddleware = (
@@ -42,7 +40,6 @@ export const authMiddleware = (
     req.externalId = decoded.sub; // Auth0 unique ID
     req.email = decoded.email;
     req.userId = decoded.sub; // For now, use externalId as userId
-    req.userRole = getUserRole(decoded.email); // STORY-1.4 RBAC - determine user role
 
     next();
   } catch (error) {
