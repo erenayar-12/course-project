@@ -1,0 +1,89 @@
+/**
+ * SkeletonLoader Styles (AC10: Loading States)
+ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeletonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.skeletonBlock {
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 8px;
+}
+
+.skeletonTableContainer {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.skeletonTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.skeletonRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.skeletonRow:last-child {
+  border-bottom: none;
+}
+
+.skeletonCell {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.skeletonLine {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .skeletonCell {
+    padding: 0.75rem;
+  }
+
+  .skeletonLine {
+    height: 10px;
+  }
+}
+
+/* Accessibility: Reduce animation for users with motion sensitivities */
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBlock,
+  .skeletonLine {
+    animation: none;
+    background: #f3f4f6;
+  }
+}

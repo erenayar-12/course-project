@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  
+  // Auth0 or similar external ID
+  externalId String  @unique
+  email     String   @unique
+  name      String?
+  
+  // User metadata
+  role      String   @default("user") // "user", "admin", "evaluator"
+  status    String   @default("active") // "active", "inactive", "banned"
+  
+  // Relationships
+  ideas     Idea[]
+  attachments IdeaAttachment[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([externalId])
+  @@index([email])
+}
+
+model Idea {
+  id        String   @id @default(cuid())
+  
+  // Content
+  title     String   @db.VarChar(100)
+  description String @db.Text
+  category  String   // "Innovation", "Process Improvement", "Cost Reduction", "Other"
+  
+  // Metadata
+  status    String   @default("Submitted") // "Submitted", "Under Review", "Accepted", "Rejected"
+  
+  // User relationship
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // File attachments
+  attachments IdeaAttachment[]
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  submittedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@index([userId, title])
+}
+
+model IdeaAttachment {
+  id        String   @id @default(cuid())
+  
+  // Relationship to idea
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  
+  // File metadata
+  originalName String  @db.VarChar(255)
+  storedName   String  @db.VarChar(255) @unique
+  fileSize     Int
+  mimeType     String  @db.VarChar(100)
+  
+  // Upload metadata
+  uploadedBy String
+  user       User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([ideaId])
+  @@index([uploadedBy])
+}

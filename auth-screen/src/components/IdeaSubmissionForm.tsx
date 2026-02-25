@@ -21,7 +21,10 @@ import { ideaSubmissionSchema, IdeaSubmissionFormData, IDEA_CATEGORIES } from '@
 import FormTextField from '@/components/FormTextField';
 import FormTextArea from '@/components/FormTextArea';
 import FormSelect from '@/components/FormSelect';
+import { FileUploadInput } from '@/components/FileUploadInput';
+import { FileProgressBar } from '@/components/FileProgressBar';
 import ideasService from '@/services/ideas.service';
+import { fileService } from '@/services/file.service';
 
 interface IdeaSubmissionFormProps {
   onSuccess?: () => void;
@@ -37,6 +40,10 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // React Hook Form setup with Zod resolver
   const {
@@ -51,20 +58,49 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
 
   /**
    * Form submission handler.
-   * Validates, calls API, shows feedback, and redirects.
+   * Validates, calls API, shows feedback, handles file upload, and redirects.
    */
   const onSubmit = async (data: IdeaSubmissionFormData) => {
     setIsSubmitting(true);
     setSubmitError(null);
+    setFileError(null);
 
     try {
-      await ideasService.submitIdea(data);
+      // 1. Submit idea form data
+      const ideaResponse = await ideasService.submitIdea(data);
+      const ideaId = ideaResponse.id;
 
-      // Callback to parent
+      // 2. If file selected, upload it
+      if (selectedFile) {
+        // Validate file before upload
+        const validation = fileService.validateFile(selectedFile);
+        if (!validation.valid) {
+          setFileError(validation.error || 'Invalid file');
+          setIsSubmitting(false);
+          return;
+        }
+
+        setIsUploading(true);
+        try {
+          await fileService.uploadFile(ideaId, selectedFile, (event) => {
+            setUploadProgress(event.progress);
+          });
+        } catch (uploadError) {
+          const message = uploadError instanceof Error ? uploadError.message : 'File upload failed';
+          setFileError(message);
+          setIsSubmitting(false);
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // 3. Show success
       onSuccess?.();
 
-      // Reset form and redirect after short delay
+      // 4. Reset form and redirect after short delay
       reset();
+      setSelectedFile(null);
+      setUploadProgress(0);
       setTimeout(() => {
         navigate('/ideas');
       }, 2000);
@@ -73,6 +109,7 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
@@ -143,12 +180,27 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
           disabled={isSubmitting}
         />
 
+        {/* File Upload Input */}
+        <FileUploadInput
+          onFileSelect={setSelectedFile}
+          selectedFile={selectedFile}
+          error={fileError || undefined}
+          disabled={isSubmitting || isUploading}
+        />
+
+        {/* Upload Progress Bar */}
+        <FileProgressBar
+          progress={uploadProgress}
+          isUploading={isUploading}
+          fileName={selectedFile?.name}
+        />
+
         {/* Action Buttons */}
         <div className="mt-8 flex gap-4 justify-end">
           <button
             type="button"
             onClick={handleCancel}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Cancel
@@ -156,17 +208,17 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSuccess, onCa
 
           <button
             type="submit"
-            disabled={isSubmitting || !isValid || !isDirty}
+            disabled={isSubmitting || isUploading || !isValid || !isDirty}
             className={`
               px-6 py-2 bg-blue-600 text-white rounded-md font-medium
               hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors flex items-center gap-2
             `}
           >
-            {isSubmitting ? (
+            {isSubmitting || isUploading ? (
               <>
                 <span className="inline-block animate-spin">⟳</span>
-                Submitting...
+                {isUploading ? 'Uploading...' : 'Submitting...'}
               </>
             ) : (
               'Submit Idea'
