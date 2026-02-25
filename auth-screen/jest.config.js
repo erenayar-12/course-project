@@ -15,7 +15,7 @@ export default {
           jsxImportSource: 'react',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
-          module: 'commonjs',
+          module: 'es2020',
           target: 'ES2020',
           lib: ['ES2020', 'DOM', 'DOM.Iterable'],
           moduleResolution: 'node',

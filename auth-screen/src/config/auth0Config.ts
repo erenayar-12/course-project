@@ -32,7 +32,8 @@ export const AUTH0_CONFIG = {
  * @throws Error if configuration is incomplete (only in production)
  */
 export const validateAuth0Config = (): void => {
-  const isDevelopment = import.meta.env.DEV;
+  // Use process.env.NODE_ENV for Jest/Node compatibility (import.meta not supported in all Jest setups)
+  const isDevelopment = process.env.NODE_ENV !== 'production';
 
   if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID) {
     const message =
