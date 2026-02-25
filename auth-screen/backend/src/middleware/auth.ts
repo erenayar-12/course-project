@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { getUserRole } from './roleCheck.js';
+import { getUserRole } from './roleCheck';
 
 export interface AuthRequest extends Request {
   userId?: string;

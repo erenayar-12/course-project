@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import ideasRouter from './routes/ideas.js';
 import authRouter from './routes/auth.js';
+import evaluationsRouter from './routes/evaluations.js';
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/ideas', ideasRouter);
 app.use('/api/auth', authRouter);
+app.use(evaluationsRouter); // Evaluation routes (already have /api prefix)
 
 // 404 handler
 app.use((req, res) => {

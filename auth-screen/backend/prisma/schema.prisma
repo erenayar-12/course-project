@@ -22,6 +22,7 @@ model User {
 
   ideas       Idea[]
   attachments IdeaAttachment[] @relation("uploadedBy")
+  evaluations IdeationEvaluation[] // STORY-2.3b: evaluator's evaluations
 }
 
 model Idea {
@@ -29,17 +30,19 @@ model Idea {
   title       String   @db.VarChar(100)
   description String
   category    String   // PRODUCT, PROCESS, MARKETING, OTHER
-  status      String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  status      String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, NEEDS_REVISION, APPROVED, REJECTED
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   attachments IdeaAttachment[]
+  evaluations IdeationEvaluation[] // STORY-2.3b: immutable audit trail
 
   @@index([userId])
   @@index([status])
   @@index([category])
+  @@index([status, createdAt])
 }
 
 model IdeaAttachment {
@@ -56,4 +59,22 @@ model IdeaAttachment {
 
   @@index([ideaId])
   @@index([uploadedBy])
+}
+
+// STORY-2.3b: Immutable evaluation audit trail
+model IdeationEvaluation {
+  id          String   @id @default(cuid())
+  ideaId      String
+  idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  evaluatorId String
+  evaluator   User     @relation(fields: [evaluatorId], references: [id], onDelete: Restrict)
+  status      String   // ACCEPTED, REJECTED, NEEDS_REVISION
+  comments    String   @db.VarChar(500)
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ideaId])
+  @@index([evaluatorId])
+  @@index([status, createdAt])
 }
