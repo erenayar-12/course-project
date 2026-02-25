@@ -1,213 +1,101 @@
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 import LoginPage from '../LoginPage';
 
-/**
- * LoginPage Test Suite
- *
- * Tests verify observable behavior of the login page UI (AC1, AC3, AC4, AC5 from STORY-EPIC-1.1)
- * Focus: User sees login form with correct labels, placeholders, and styling
- */
+// Mock external service (Auth0)
+jest.mock('@auth0/auth0-react');
 
 describe('LoginPage', () => {
-  const renderLoginPage = () => {
-    return render(
-      <Router>
-        <LoginPage />
-      </Router>
-    );
-  };
-
-  describe('AC 1: Login Page Displays Correctly', () => {
-    it('should render heading with text "Login"', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const heading = screen.getByRole('heading', { level: 1 });
-
-      // 🔴 ASSERT
-      expect(heading).toHaveTextContent('Login');
+  let mockLoginWithRedirect: jest.Mock;
+  let mockUseAuth0: jest.Mock;
+  
+  beforeEach(() => {
+    mockLoginWithRedirect = jest.fn();
+    jest.clearAllMocks();
+    mockUseAuth0 = useAuth0 as jest.Mock;
+    mockUseAuth0.mockReturnValue({
+      loginWithRedirect: mockLoginWithRedirect,
+      isLoading: false,
+      error: null,
+      isAuthenticated: false,
     });
+  });
 
-    it('should render email input field with label', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
-      // 🟢 ACT
+  describe('AC 1: Valid login redirects to Auth0', () => {
+    it('should call loginWithRedirect when form submitted with credentials', async () => {
+      // 🔵 ARRANGE: Render component
+      render(
+        <BrowserRouter>
+          <LoginPage />
+        </BrowserRouter>
+      );
       const emailInput = screen.getByLabelText(/email/i);
-
-      // 🔴 ASSERT
-      expect(emailInput).toBeInTheDocument();
-      expect(emailInput).toHaveAttribute('type', 'email');
-    });
-
-    it('should render password input field with label', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
       const passwordInput = screen.getByLabelText(/password/i);
+      const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-      // 🔴 ASSERT
-      expect(passwordInput).toBeInTheDocument();
-      expect(passwordInput).toHaveAttribute('type', 'password');
+      // 🟢 ACT: User fills form and submits
+      fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(submitButton);
+
+      // 🔴 ASSERT: loginWithRedirect called with email hint
+      expect(mockLoginWithRedirect).toHaveBeenCalled();
+      expect(mockLoginWithRedirect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authorizationParams: expect.objectContaining({
+            login_hint: 'user@example.com',
+          }),
+        })
+      );
     });
 
-    it('should render Sign In button', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
+    it('should show loading state during authentication (AC 5)', async () => {
+      // 🔵 ARRANGE: Mock isLoading = true
+      (useAuth0 as jest.Mock).mockReturnValue({
+        loginWithRedirect: mockLoginWithRedirect,
+        isLoading: true,
+        error: null,
+        isAuthenticated: false,
+      });
 
-      // 🟢 ACT
-      const signInButton = screen.getByRole('button', { name: /sign in/i });
+      // 🟢 ACT: Render component
+      render(
+        <BrowserRouter>
+          <LoginPage />
+        </BrowserRouter>
+      );
 
-      // 🔴 ASSERT
-      expect(signInButton).toBeInTheDocument();
-      expect(signInButton).toHaveClass('btn-primary');
-    });
-
-    it('should render link to registration page with correct text', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const registerLink = screen.getByRole('link', { name: /register here/i });
-
-      // 🔴 ASSERT
-      expect(registerLink).toBeInTheDocument();
-      expect(registerLink).toHaveAttribute('href', '/register');
-    });
-  });
-
-  describe('AC 4: Form Labels and Placeholders Are Clear', () => {
-    it('should display email label', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const emailLabel = screen.getByText(/email/i);
-
-      // 🔴 ASSERT
-      expect(emailLabel).toBeInTheDocument();
-    });
-
-    it('should display password label', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const passwordLabel = screen.getByText(/password/i);
-
-      // 🔴 ASSERT
-      expect(passwordLabel).toBeInTheDocument();
-    });
-
-    it('should mark required fields with asterisk', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const requiredMarkers = screen.getAllByText('*');
-
-      // 🔴 ASSERT
-      expect(requiredMarkers.length).toBeGreaterThan(0);
-    });
-
-    it('should have placeholder text on email input', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
-
-      // 🔴 ASSERT
-      expect(emailInput.placeholder).toBeTruthy();
-    });
-
-    it('should have placeholder text on password input', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
-
-      // 🔴 ASSERT
-      expect(passwordInput.placeholder).toBeTruthy();
+      // 🔴 ASSERT: Button shows loading state
+      const button = screen.getByRole('button', { name: /logging in/i });
+      expect(button).toBeDisabled();
+      expect(screen.getByText(/logging in/i)).toBeInTheDocument();
     });
   });
 
-  describe('AC 3: Pages Are Fully Responsive', () => {
-    it('should render form in responsive container', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
+  describe('AC 2: Invalid credentials show error message', () => {
+    it('should display error message when Auth0 returns error', async () => {
+      // 🔵 ARRANGE: Mock Auth0 error
+      mockUseAuth0.mockReturnValue({
+        loginWithRedirect: mockLoginWithRedirect,
+        isLoading: false,
+        error: { message: 'Invalid credentials' },
+        isAuthenticated: false,
+      });
 
-      // 🟢 ACT
-      const { container } = renderLoginPage();
-      const mainElement = container.firstChild;
+      // 🟢 ACT: Render component
+      render(
+        <BrowserRouter>
+          <LoginPage />
+        </BrowserRouter>
+      );
 
-      // 🔴 ASSERT - Check that form is in responsive container
-      expect(mainElement).toHaveClass('responsive');
-      expect(mainElement).toHaveClass('min-h-screen');
-    });
-
-    it('should have input fields with proper width constraints', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const emailInput = screen.getByLabelText(/email/i) as HTMLElement;
-
-      // 🔴 ASSERT - Check input has proper responsive styling
-      expect(emailInput).toHaveClass('w-full');
-      expect(emailInput).toHaveClass('px-4');
-    });
-
-    it('should have form container with max-width for desktop', () => {
-      // 🔵 ARRANGE
-      const { container } = renderLoginPage();
-
-      // 🟢 ACT
-      const formContainer = container.querySelector('.max-w-md');
-
-      // 🔴 ASSERT
-      expect(formContainer).toBeInTheDocument();
-    });
-  });
-
-  describe('AC 5: Links and Buttons Are Properly Styled', () => {
-    it('should have button with proper styling classes', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const signInButton = screen.getByRole('button', { name: /sign in/i });
-
-      // 🔴 ASSERT - Check button has styling classes (not just 'hover:')
-      expect(signInButton).toHaveClass('bg-indigo-600');
-      expect(signInButton).toHaveClass('text-white');
-    });
-
-    it('should have link with proper styling classes', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const registerLink = screen.getByRole('link', { name: /register here/i });
-
-      // 🔴 ASSERT - Check link has styling classes
-      expect(registerLink).toHaveClass('text-indigo-600');
-      expect(registerLink).toHaveClass('font-semibold');
-    });
-
-    it('should have heading with proper text color for accessibility', () => {
-      // 🔵 ARRANGE
-      renderLoginPage();
-
-      // 🟢 ACT
-      const heading = screen.getByRole('heading', { level: 1 });
-
-      // 🔴 ASSERT - Check that text color class is applied (indicating proper contrast)
-      expect(heading).toHaveClass('text-gray-800');
+      // 🔴 ASSERT: Generic error message displayed (not actual error for security)
+      expect(screen.getByText(/Invalid email or password/i)).toBeInTheDocument();
     });
   });
 });

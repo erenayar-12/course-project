@@ -9,14 +9,20 @@
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --max-warnings 0",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:unit": "jest --testPathPattern=\\.test\\.tsx?$",
-    "test:coverage": "jest --coverage"
+    "test:integration": "jest --testPathPattern=\\.integration\\.test\\.tsx?$",
+    "test:coverage": "jest --coverage",
+    "test:coverage:report": "jest --coverage && open coverage/lcov-report/index.html || start coverage/lcov-report/index.html",
+    "mutation:test": "stryker run",
+    "ci": "npm run type-check && npm run lint && npm run test:coverage && npm run mutation:test"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0"
@@ -26,7 +32,7 @@
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
     "@types/jest": "^29.5.11",
-    "@types/node": "^20.10.6",
+    "@types/node": "^20.19.33",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@typescript-eslint/eslint-plugin": "^6.17.0",

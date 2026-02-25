@@ -6,14 +6,24 @@ export default {
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   maxWorkers: 1,
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        jsx: 'react-jsx',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react-jsx',
+          jsxImportSource: 'react',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+          module: 'commonjs',
+          target: 'ES2020',
+          lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+          moduleResolution: 'node',
+          skipLibCheck: true,
+          types: ['jest', '@testing-library/jest-dom', 'vite/client', 'node']
+        },
       },
-    },
+    ],
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
