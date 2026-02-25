@@ -73,6 +73,7 @@ describe('App', () => {
 
   it('should validate Auth0 configuration on mount', () => {
     // 🔵 ARRANGE: Import validateAuth0Config
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { validateAuth0Config } = require('./config/auth0Config');
 
     // 🟢 ACT: Render App component

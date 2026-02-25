@@ -33,13 +33,13 @@ export const AUTH0_CONFIG = {
  */
 export const validateAuth0Config = (): void => {
   const isDevelopment = import.meta.env.DEV;
-  
+
   if (!AUTH0_DOMAIN || !AUTH0_CLIENT_ID) {
     const message =
       'Auth0 configuration missing. Please set VITE_AUTH0_DOMAIN and VITE_AUTH0_CLIENT_ID in .env.local';
     // eslint-disable-next-line no-console
     console.error(message);
-    
+
     // Only throw in production; allow dev mode with test values
     if (!isDevelopment) {
       throw new Error('Auth0 configuration is incomplete');

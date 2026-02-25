@@ -4,7 +4,7 @@ import { ROLES } from '../constants/roles';
 
 /**
  * Dashboard Component
- * 
+ *
  * Shows different content based on user role.
  * Reference: STORY-EPIC-1.4 - Role-based UI
  */
@@ -43,7 +43,9 @@ const Dashboard: React.FC = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-gray-800">Evaluation Dashboard</h2>
-            <p className="text-gray-600">Welcome, Evaluator! Review and evaluate submitted ideas.</p>
+            <p className="text-gray-600">
+              Welcome, Evaluator! Review and evaluate submitted ideas.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <h3 className="font-semibold text-purple-900">Evaluation Queue</h3>
@@ -103,17 +105,16 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Role-based Content */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          {getDashboardContent()}
-        </div>
+        <div className="bg-white rounded-lg shadow-lg p-6">{getDashboardContent()}</div>
 
         {/* Info Box */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-700">
-            <strong>Note:</strong> This is a mock dashboard. Different content is shown based on your role.
-            Try logging in with different emails to see role-based access control:
+            <strong>Note:</strong> This is a mock dashboard. Different content is shown based on
+            your role. Try logging in with different emails to see role-based access control:
             <br />• <code className="bg-white px-2 py-1 rounded">user@example.com</code> → Submitter
-            <br />• <code className="bg-white px-2 py-1 rounded">evaluator@example.com</code> → Evaluator
+            <br />• <code className="bg-white px-2 py-1 rounded">evaluator@example.com</code> →
+            Evaluator
             <br />• <code className="bg-white px-2 py-1 rounded">admin@example.com</code> → Admin
           </p>
         </div>

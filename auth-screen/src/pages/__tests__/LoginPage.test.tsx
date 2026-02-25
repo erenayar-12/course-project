@@ -169,7 +169,7 @@ describe('LoginPage', () => {
           </BrowserRouter>
         );
         // Note: Component starts with no error; this test validates error clearing behavior
-        
+
         // 🔴 ASSERT: No error initially
         expect(screen.queryByText(/Please enter both email and password/i)).not.toBeInTheDocument();
       });

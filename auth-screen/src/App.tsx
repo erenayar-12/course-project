@@ -20,7 +20,7 @@ const AppRoutes: React.FC = () => (
     {/* Public Routes */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/register" element={<RegistrationPage />} />
-    
+
     {/* Protected Routes */}
     <Route
       path="/dashboard"
@@ -30,7 +30,7 @@ const AppRoutes: React.FC = () => (
         </ProtectedRoute>
       }
     />
-    
+
     <Route
       path="/evaluation-queue"
       element={
@@ -39,15 +39,16 @@ const AppRoutes: React.FC = () => (
         </ProtectedRoute>
       }
     />
-    
+
     {/* Default redirect */}
     <Route path="/" element={<Navigate to="/login" replace />} />
   </Routes>
 );
 
 const App: React.FC = () => {
+  // eslint-disable-next-line no-console
   console.log('App component rendering with RBAC support (Story 1.4)');
-  
+
   return (
     <MockAuth0Provider>
       <AppRoutes />

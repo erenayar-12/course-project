@@ -11,7 +11,7 @@ export const ROLES = {
   SUBMITTER: 'submitter',
 } as const;
 
-export type UserRole = typeof ROLES[keyof typeof ROLES];
+export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 
 /**
  * Role hierarchy for permission checking

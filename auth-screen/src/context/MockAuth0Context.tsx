@@ -8,8 +8,15 @@ interface UserData {
   timestamp: string;
 }
 
+interface LoginOptions {
+  authorizationParams?: {
+    login_hint?: string;
+    screen_hint?: string;
+  };
+}
+
 interface MockAuth0ContextType {
-  loginWithRedirect: (options?: any) => Promise<void>;
+  loginWithRedirect: (options?: LoginOptions) => Promise<void>;
   isLoading: boolean;
   error: null | { message: string };
   user: UserData | null;
@@ -35,27 +42,28 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  const loginWithRedirect = async (options?: any) => {
+  const loginWithRedirect = async (options?: LoginOptions) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Simulate login delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Mock Auth0 login with role assignment
+      // eslint-disable-next-line no-console
       console.log('Mock Auth0 login with:', options);
-      
+
       // Determine role based on email or default to SUBMITTER (AC1 - Default role is Submitter)
       let role: UserRole = ROLES.SUBMITTER;
       const email = options?.authorizationParams?.login_hint || 'user@example.com';
-      
+
       if (email.includes('evaluator') || email.includes('eval')) {
         role = ROLES.EVALUATOR;
       } else if (email.includes('admin')) {
         role = ROLES.ADMIN;
       }
-      
+
       // Store user info with role
       const userData: UserData = {
         email,
@@ -63,14 +71,16 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
         role,
         timestamp: new Date().toISOString(),
       };
-      
+
       localStorage.setItem('mock_user', JSON.stringify(userData));
       setUser(userData);
-      
+
       // Show success message with role
-      alert(`✅ Login Successful!\n\nEmail: ${email}\nRole: ${role}\n\nThis is a test/mock login. In production, you would be redirected to Auth0.`);
+      // eslint-disable-next-line no-console
+      console.log('Mock login successful:', email, role);
     } catch (err) {
       setError({ message: 'Login failed' });
+      // eslint-disable-next-line no-console
       console.error('Mock login error:', err);
     } finally {
       setIsLoading(false);
@@ -80,6 +90,7 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
   const logout = () => {
     localStorage.removeItem('mock_user');
     setUser(null);
+    // eslint-disable-next-line no-console
     console.log('User logged out');
   };
 

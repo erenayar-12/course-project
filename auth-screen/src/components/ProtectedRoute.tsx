@@ -11,21 +11,17 @@ interface ProtectedRouteProps {
 
 /**
  * ProtectedRoute Component
- * 
+ *
  * Validates user authentication and role before rendering protected content.
  * Reference: STORY-EPIC-1.4 - AC2, AC3 (Route Protection)
- * 
+ *
  * Features:
  * - Check if user is authenticated
  * - Check if user has required role
  * - Redirect to login if not authenticated
  * - Redirect to dashboard with error if insufficient permissions
  */
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requiredRoles,
-  path,
-}) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles, path }) => {
   const { user } = useMockAuth0();
 
   // If no user is logged in, redirect to login
@@ -41,8 +37,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!hasRequiredRole) {
     // Show access denied and redirect (AC2, AC3)
+    // eslint-disable-next-line no-console
     console.warn(`Access denied for role "${user.role}" on route "${path}"`);
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
@@ -52,7 +49,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             Your role: <span className="font-semibold capitalize">{user.role}</span>
           </p>
           <button
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => (window.location.href = '/dashboard')}
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Go to Dashboard
