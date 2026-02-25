@@ -5,8 +5,7 @@
  * Tests: Select all checkbox, bulk actions buttons
  */
 
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import BulkActionsBar from '../BulkActionsBar';
 
 describe('BulkActionsBar', () => {
@@ -50,7 +49,7 @@ describe('BulkActionsBar', () => {
       expect(bulkStatusButton).toBeDisabled();
 
       // Enable when items selected
-      const { rerender } = render(
+      render(
         <BulkActionsBar
           selectedCount={3}
           totalCount={10}

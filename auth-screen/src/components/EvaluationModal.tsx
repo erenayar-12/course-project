@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { Idea, EvaluationStatus } from '../../types/evaluationTypes';
+import { Idea, EvaluationStatus } from '../types/evaluationTypes';
 
 interface EvaluationModalProps {
   idea?: Idea;
@@ -28,7 +28,7 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [status, setStatus] = useState<EvaluationStatus>('ACCEPTED');
+  const [status, setStatus] = useState(EvaluationStatus.ACCEPTED);
   const [comments, setComments] = useState('');
   const [fileUrl, setFileUrl] = useState<string>();
   const [error, setError] = useState<string>();

@@ -5,25 +5,27 @@
  * Tests: History list rendering, evaluation details, empty state
  */
 
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import EvaluationHistory from '../EvaluationHistory';
+import { EvaluationStatus } from '../../types/evaluationTypes';
 
 describe('EvaluationHistory', () => {
   const mockEvaluations = [
     {
       id: 'eval-1',
+      ideaId: 'idea-1',
       evaluatorId: 'eval-1',
       evaluatorEmail: 'evaluator1@example.com',
-      status: 'UNDER_REVIEW',
+      status: EvaluationStatus.ACCEPTED,
       comments: 'Currently reviewing',
       createdAt: new Date('2025-02-01'),
     },
     {
       id: 'eval-2',
+      ideaId: 'idea-1',
       evaluatorId: 'eval-2',
       evaluatorEmail: 'evaluator2@example.com',
-      status: 'ACCEPTED',
+      status: EvaluationStatus.REJECTED,
       comments: 'Approved!',
       createdAt: new Date('2025-02-02'),
     },

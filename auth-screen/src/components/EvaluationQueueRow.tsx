@@ -7,8 +7,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Idea } from '../../types/evaluationTypes';
-import StatusBadge from './StatusBadge';
+import { Idea } from '../types/evaluationTypes';
+import { StatusBadge } from './StatusBadge';
 
 interface EvaluationQueueRowProps {
   idea: Idea;

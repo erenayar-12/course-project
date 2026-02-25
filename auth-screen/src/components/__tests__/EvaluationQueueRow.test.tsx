@@ -5,10 +5,10 @@
  * Tests: Submitter email, title link, category tag, date formatting, status badge, action button
  */
 
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import EvaluationQueueRow from '../EvaluationQueueRow';
+import { IdeaStatus } from '../../types/evaluationTypes';
 
 jest.mock('../StatusBadge', () => {
   return function MockStatusBadge({ status }: any) {
@@ -20,10 +20,13 @@ describe('EvaluationQueueRow', () => {
   const mockIdea = {
     id: 'idea-1',
     title: 'Test Idea',
+    description: 'Test Description',
     submitterEmail: 'user@example.com',
     category: 'INNOVATION',
     createdAt: new Date('2025-02-15'),
-    status: 'SUBMITTED',
+    status: IdeaStatus.SUBMITTED,
+    userId: 'user-1',
+    updatedAt: new Date('2025-02-15'),
     attachmentCount: 2,
   };
 

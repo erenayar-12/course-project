@@ -7,11 +7,10 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Idea, IdeaStatus, EvaluationStatus, EvaluationQueueResponse } from '../types/evaluationTypes';
-import EvaluationQueueRow from '../components/EvaluationQueueRow';
-import EvaluationModal from '../components/EvaluationModal';
-import EvaluationHistory from '../components/EvaluationHistory';
-import BulkActionsBar from '../components/BulkActionsBar';
+import { Idea, IdeaStatus, EvaluationStatus, EvaluationQueueResponse } from '../../types/evaluationTypes';
+import EvaluationQueueRow from '../../components/EvaluationQueueRow';
+import EvaluationModal from '../../components/EvaluationModal';
+import BulkActionsBar from '../../components/BulkActionsBar';
 
 type FilterStatus = 'all' | IdeaStatus;
 

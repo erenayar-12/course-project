@@ -17,7 +17,7 @@
 import React from 'react';
 
 interface StatusBadgeProps {
-  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'NEEDS_REVISION' | 'APPROVED' | 'REJECTED';
 }
 
 /**
@@ -30,6 +30,7 @@ function getStatusColorClasses(status: StatusBadgeProps['status']): { bg: string
     DRAFT: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
     SUBMITTED: { bg: 'bg-blue-100', text: 'text-blue-800' },
     UNDER_REVIEW: { bg: 'bg-orange-100', text: 'text-orange-800' },
+    NEEDS_REVISION: { bg: 'bg-purple-100', text: 'text-purple-800' },
     APPROVED: { bg: 'bg-green-100', text: 'text-green-800' },
     REJECTED: { bg: 'bg-red-100', text: 'text-red-800' },
   };
@@ -46,6 +47,7 @@ function formatStatusText(status: StatusBadgeProps['status']): string {
     DRAFT: 'Draft',
     SUBMITTED: 'Submitted',
     UNDER_REVIEW: 'Under Review',
+    NEEDS_REVISION: 'Needs Revision',
     APPROVED: 'Approved',
     REJECTED: 'Rejected',
   };

@@ -5,11 +5,11 @@
  * Tests: Form submission, file upload, API integration
  */
 
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
 import EvaluationModal from '../EvaluationModal';
+import { IdeaStatus } from '../../types/evaluationTypes';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -19,6 +19,11 @@ describe('EvaluationModal Integration Tests', () => {
     id: 'idea-1',
     title: 'Test Idea',
     description: 'Test Description',
+    category: 'Technology',
+    status: IdeaStatus.SUBMITTED,
+    userId: 'user-1',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
   };
 
   const mockOnClose = jest.fn();

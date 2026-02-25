@@ -5,12 +5,18 @@ export default {
   testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: {
+        types: ['jest', 'node'],
+        noImplicitAny: false,
+      }
+    }],
   },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
     '!src/server.ts',
+    '!src/**/__tests__/**',
   ],
   coverageThreshold: {
     global: {

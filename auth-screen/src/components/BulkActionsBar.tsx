@@ -5,7 +5,7 @@
  * AC 15: Select, Bulk Update, Bulk Assign, CSV Export
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 
 interface BulkActionsBarProps {
   selectedCount: number;

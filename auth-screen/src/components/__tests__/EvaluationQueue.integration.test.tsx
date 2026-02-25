@@ -9,7 +9,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import axios from 'axios';
-import EvaluationQueue from '../EvaluationQueue';
+import EvaluationQueue from '../../pages/evaluation-queue/EvaluationQueue';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -112,7 +112,7 @@ describe('EvaluationQueue Integration Tests', () => {
   it('should handle pagination with next button', async () => {
     mockedAxios.get.mockResolvedValue({ data: mockEvaluationQueue });
 
-    const { rerender } = renderWithRouter(<EvaluationQueue />);
+    renderWithRouter(<EvaluationQueue />);
 
     await waitFor(() => {
       expect(screen.getByText('First Idea')).toBeInTheDocument();

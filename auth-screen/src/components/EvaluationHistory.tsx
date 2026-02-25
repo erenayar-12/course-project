@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { IdeationEvaluation } from '../../types/evaluationTypes';
+import { IdeationEvaluation } from '../types/evaluationTypes';
 
 interface EvaluationHistoryProps {
   evaluations: IdeationEvaluation[];
@@ -43,7 +43,7 @@ const EvaluationHistory: React.FC<EvaluationHistoryProps> = ({ evaluations }) =>
       <h3 className="text-lg font-semibold mb-4 text-gray-800">Evaluation History</h3>
       
       <div className="space-y-4">
-        {evaluations.map((evaluation, index) => (
+        {evaluations.map((evaluation) => (
           <div
             key={evaluation.id}
             data-testid="evaluation-item"

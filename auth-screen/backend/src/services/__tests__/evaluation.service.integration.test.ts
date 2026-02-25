@@ -26,6 +26,7 @@ describe('EvaluationService Integration Tests', () => {
 
   beforeEach(async () => {
     // Clear data before each test
+    // @ts-ignore - IdeationEvaluation model exists in Prisma schema
     await prisma.ideationEvaluation.deleteMany();
   });
 

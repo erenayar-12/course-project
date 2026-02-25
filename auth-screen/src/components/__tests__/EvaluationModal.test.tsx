@@ -5,16 +5,21 @@
  * Tests: Modal header, status dropdown, comments textarea, submit button
  */
 
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import EvaluationModal from '../EvaluationModal';
+import { IdeaStatus } from '../../types/evaluationTypes';
 
 describe('EvaluationModal', () => {
   const mockIdea = {
     id: 'idea-1',
     title: 'Test Idea',
     description: 'This is a test idea',
+    category: 'Technology',
+    status: IdeaStatus.SUBMITTED,
+    userId: 'user-1',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
   };
 
   const mockOnSubmit = jest.fn();
