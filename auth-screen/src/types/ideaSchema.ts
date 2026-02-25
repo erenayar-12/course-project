@@ -19,6 +19,10 @@ export const ideaSubmissionSchema = z.object({
     .min(10, 'Description must be at least 10 characters')
     .max(2000, 'Description must not exceed 2000 characters'),
   category: z.enum(IDEA_CATEGORIES),
+  file: z
+    .instanceof(File)
+    .optional()
+    .nullable(),
 });
 
 export type IdeaSubmissionFormData = z.infer<typeof ideaSubmissionSchema>;
