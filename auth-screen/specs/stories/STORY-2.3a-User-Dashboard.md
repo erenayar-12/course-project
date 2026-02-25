@@ -53,21 +53,23 @@ Users need visibility into all their submitted ideas after submission. The dashb
   - Red: REJECTED
 
 ### AC 5: Pagination Controls Enable Navigation
-- **Given** user has more than 10 ideas
+- **Given** user has more than 10 ideas sorted by submission date (most recent first)
 - **When** dashboard displays pagination controls
 - **Then** pagination shows current page, total pages, and buttons to navigate
 - **And** each page displays exactly 10 ideas (except last page)
+- **Note** Ideas are sorted by `createdAt DESC` (most recent submissions first)
 
 ### AC 6: Statistics Display Idea Status Breakdown
 - **Given** dashboard loads
 - **When** user views the statistics section
-- **Then** a summary is displayed showing: Total Ideas, and counts for each status
-- **And** counts update in real-time with list
+- **Then** a summary is displayed showing: Total Ideas, status counts AND percentage breakdown (e.g., "3 Approved (30%)")
+- **And** statistics update after any idea status change on the page
 
 ### AC 7: Click Row Navigates to Idea Detail Page
 - **Given** user views the ideas list
 - **When** user clicks on any idea row
-- **Then** user is navigated to the idea detail page for that idea
+- **Then** user is navigated to `/ideas/:ideaId` (detail page route)
+- **Note** STORY-2.5 (Detail Page) will implement the destination; AC7 creates the link
 
 ### AC 8: Loading State During Data Fetch
 - **Given** dashboard is loading data from API
@@ -112,14 +114,20 @@ All acceptance criteria must pass automated tests and user/QA sign-off:
 ---
 
 ## Implementation Details
+### Clarifications (from /speckit.clarify)
 
+**Decisions Made:**
+1. **UI Component Library:** Use existing UI library already in project (determine from current package.json/component imports)
+2. **Idea Sort Order:** Most recent submissions first (`createdAt DESC`) - applied to AC5 above
+3. **Statistics Display:** Show both absolute counts AND percentages (e.g., "5 Submitted (50%)") - applied to AC6 above
+4. **Detail Page Link:** AC7 links to `/ideas/:ideaId` route placeholder; STORY-2.5 will implement destination
 ### Frontend (React/TypeScript)
 
 **New Components:**
 - `src/pages/Dashboard.tsx` - Main dashboard page component (router)
-- `src/pages/UserDashboard.tsx` - User "My Ideas" view
-- `src/components/IdeaListItem.tsx` - Individual idea row in list
-- `src/components/IdeaStatsBar.tsx` - Statistics summary bar
+- `src/pages/UserDashboard.tsx` - User "My Ideas" view with sorting & stats
+- `src/components/IdeaListItem.tsx` - Individual idea row in list (clickable)
+- `src/components/IdeaStatsBar.tsx` - Statistics summary bar (counts + percentages)
 - `src/components/StatusBadge.tsx` - Reusable status badge (color-coded)
 - `src/types/ideaTypes.ts` - TypeScript interfaces for ideas
 
@@ -160,8 +168,11 @@ All acceptance criteria must pass automated tests and user/QA sign-off:
 ## Technical Notes
 
 ### Technology Stack
-- **Frontend:** React 18, TypeScript, Tailwind CSS, React Query (for data fetching)
-- **API:** RESTful (Endpoint: GET /api/ideas - already exists)
+- **Frontend:** React 18, TypeScript, Tailwind CSS
+- **UI Components:** Use existing component library in project (shadcn/ui or Material-UI—verify from codebase)
+- **Data Fetching:** React Query or built-in hooks (follow project pattern)
+- **API:** RESTful (Endpoint: GET /api/ideas?limit=10&offset=0 - already exists)
+- **Sorting:** `createdAt DESC` (most recent first) in query or client-side
 - **Authentication:** Auth0 JWT via ProtectedRoute (STORY-1.2)
 
 ### Files/Components Affected
@@ -174,19 +185,22 @@ All acceptance criteria must pass automated tests and user/QA sign-off:
 - Modified: `src/App.tsx` (add /dashboard route)
 
 ### Implementation Hints
-- Use React Query for efficient API state management
-- Implement skeleton loaders (Tailwind CSS or shadcn/ui Skeleton component)
-- Create reusable StatusBadge component (will be used in STORY-2.3b)
-- Use Prisma aggregation stats from existing API response
-- Consider infinite scroll as alternative to pagination (Phase 2)
-- Cache statistics for 5 minutes if performance needed
+- Use existing data fetching pattern from project (React Query or hooks)
+- Implement skeleton loaders using existing UI component library
+- Create reusable StatusBadge component with 5 color states (will be reused in STORY-2.3b)
+- Compute percentage breakdown: `(count / totalIdeas) * 100` for AC6
+- Sort by `createdAt DESC` to show most recent submissions first (pagination backend OFFSET=page*10)
+- Link row clicks to `/ideas/:ideaId` (destination implemented in STORY-2.5)
+- No additional caching needed; use API response directly
+- Verify API response includes all required fields: title, status, category, createdAt, attachmentCount
 
 ### Known Limitations or Considerations
 - Initial version supports only user's own ideas (pagination, no global view)
-- No real-time updates (status changes require page refresh)
-- Statistics are computed per request (not cached)
+- No real-time updates (status changes require page refresh; AC6 updates only after user navigates)
+- Statistics (counts + percentages) computed per page load from API response
+- Detail page route (`/ideas/:ideaId`) created but destination empty until STORY-2.5 (graceful 404 or placeholder)
 - Archive functionality excluded (future enhancement)
-- No filtering/sorting (deferred to STORY-2.4)
+- No filtering/sorting UI (deferred to STORY-2.4); only sort by most recent in AC5
 
 ---
 
@@ -241,10 +255,10 @@ Medium complexity story involving frontend component creation, pagination logic,
 
 **Related User Stories:**
 - [STORY-2.1: Submission Form](STORY-2.1-Submission-Form.md) - Prerequisite data source
-- [STORY-2.2: File Upload](STORY-2.2-File-Upload.md) - API endpoint source
-- [STORY-2.3b: Evaluator Queue](STORY-2.3b-Evaluator-Queue.md) - Parallel/next story (uses same components)
-- [STORY-2.4: Sort & Filter](STORY-2.4-Sort-Filter.md) - Enhancement to dashboard (future)
-- [STORY-2.5: Detail Page](STORY-2.5-Detail-Page.md) - Destination on row click (future)
+- [STORY-2.2: File Upload](STORY-2.2-File-Upload.md) - API endpoint source (GET /api/ideas)
+- [STORY-2.3b: Evaluator Queue](STORY-2.3b-Evaluator-Queue.md) - Parallel/next story (reuses StatusBadge component)
+- [STORY-2.4: Sort & Filter](STORY-2.4-Sort-Filter.md) - Enhancement to dashboard with user-selectable sorting/filtering (future)
+- [STORY-2.5: Detail Page](STORY-2.5-Detail-Page.md) - Destination for AC7 row click navigation (future; route placeholder created in 2.3a)
 
 **Epic:**
 - [EPIC-2: Idea Submission Management](../epics/EPIC-2-Idea-Submission-Management.md)
