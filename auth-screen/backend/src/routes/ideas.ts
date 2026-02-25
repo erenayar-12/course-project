@@ -1,11 +1,11 @@
 import { Router, Response } from 'express';
-import multer from 'multer';
+import { default as multer } from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthRequest, authMiddleware } from '../middleware/auth';
-import { ideasService } from '../services/ideas.service';
-import { ideasSchema, updateIdeaSchema, paginationSchema, fileUploadSchema } from '../types/ideaSchema';
-import { AppError } from '../middleware/errorHandler';
+import { AuthRequest, authMiddleware } from '../middleware/auth.js';
+import { ideasService } from '../services/ideas.service.js';
+import { ideasSchema, updateIdeaSchema, paginationSchema, fileUploadSchema } from '../types/ideaSchema.js';
+import { AppError } from '../middleware/errorHandler.js';
 import fs from 'fs';
 
 const router = Router();

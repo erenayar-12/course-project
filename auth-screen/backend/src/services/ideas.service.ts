@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ideasSchema, updateIdeaSchema } from '../types/ideaSchema';
+import { ideasSchema, updateIdeaSchema } from '../types/ideaSchema.js';
 
 const prisma = new PrismaClient();
 
