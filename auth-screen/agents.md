@@ -228,9 +228,68 @@ cp templates/story-template.md stories/[PROJECT-ID]-story-1.md
 
 ---
 
-## 10. Questions? Update This Document
+## 10. Current Sprint Specifications
+
+### Story 1.5: Logout & Session Timeout
+
+**Status:** APPROVED  
+**Story Points:** 2  
+**Estimated Days:** 0.5 - 1 day  
+**Reference:** `specs/stories/STORY-EPIC-1.5-Logout-Timeout.md`
+
+#### Overview
+Implement user-initiated logout and automatic session timeout after 30 minutes of inactivity with 5-minute warning modal.
+
+#### Acceptance Criteria
+1. **AC1: Logout Button** - User can click logout button in navigation menu and be logged out
+2. **AC2: Clear Auth Data** - Logout clears JWT token, user state, and localStorage
+3. **AC3: 30-Min Timeout** - Session automatically expires after 30 minutes of inactivity  
+4. **AC4: Activity Reset** - Mouse/keyboard/click events reset the inactivity counter
+5. **AC5: Warning Modal** - Modal displays at 25-minute mark (5 min before timeout)
+
+#### Technical Implementation
+
+**New Components:**
+- `src/hooks/useSessionTimeout.ts` - Custom hook for timeout logic
+- `src/components/SessionWarningModal.tsx` - Warning modal component
+- `src/constants/sessionConfig.ts` - Timeout constants
+
+**Modified Components:**
+- `src/components/Navbar.tsx` - Add Logout button
+- `src/context/MockAuth0Context.tsx` - Update logout handler
+- `src/App.tsx` - Integrate useSessionTimeout hook
+
+**Key Constants:**
+```typescript
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;        // 30 minutes
+const WARNING_THRESHOLD_MS = 25 * 60 * 1000;      // 5 min before timeout
+const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'click', 'scroll', 'touchstart'];
+```
+
+**Hook Responsibilities:**
+1. Track user activity via event listeners
+2. Maintain inactivity timer (reset on activity)
+3. Show warning modal at 5-minute mark
+4. Auto-logout at 30-minute mark
+5. Reset timer when user clicks "Stay Logged In"
+
+#### Dependencies
+- ✅ STORY-1.2 (Auth0 integration with logout)
+- ✅ Navigation component (Navbar.tsx)
+- ✅ STORY-1.4 (RBAC for dashboard context)
+
+#### Testing Strategy
+- Unit tests for `useSessionTimeout` hook
+- Integration: logout button clears auth state
+- Mock time: simulate inactivity, verify auto-logout
+- Verify warning modal at 25-minute mark
+- Verify activity events reset timer
+
+---
+
+## 11. Questions? Update This Document
 
 This is a living document. As conventions are clarified or changed, update this file so all team members and AI assistants stay aligned.
 
-**Last Updated:** [DATE]  
-**Owner:** [TEAM/PERSON]
+**Last Updated:** February 25, 2026  
+**Owner:** GitHub Copilot / Development Team
