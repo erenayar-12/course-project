@@ -150,7 +150,7 @@ export const UserDashboard: React.FC = () => {
     setPaginationState(pagination);
 
     // Get paginated subset
-    const paginated = calculatePaginatedIdeas(filtered as any, currentPage, ITEMS_PER_PAGE) as Idea[];
+    const paginated = calculatePaginatedIdeas(filtered as Idea[], currentPage, ITEMS_PER_PAGE) as Idea[];
     setSortedAndPaginatedIdeas(paginated);
     
     // Disable loading state after filtering completes (AC10)

@@ -11,7 +11,7 @@ import EvaluationQueueRow from '../EvaluationQueueRow';
 import { IdeaStatus } from '../../types/evaluationTypes';
 
 jest.mock('../StatusBadge', () => {
-  return function MockStatusBadge({ status }: any) {
+  return function MockStatusBadge({ status }: { status: string }) {
     return <span data-testid="status-badge">{status}</span>;
   };
 });

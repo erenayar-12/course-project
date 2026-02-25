@@ -16,7 +16,7 @@ describe('EvaluationHistory', () => {
       ideaId: 'idea-1',
       evaluatorId: 'eval-1',
       evaluatorEmail: 'evaluator1@example.com',
-      status: 'UNDER_REVIEW' as const,
+      status: EvaluationStatus.NEEDS_REVISION,
       comments: 'Currently reviewing',
       createdAt: new Date('2025-02-01'),
     },
@@ -25,7 +25,7 @@ describe('EvaluationHistory', () => {
       ideaId: 'idea-1',
       evaluatorId: 'eval-2',
       evaluatorEmail: 'evaluator2@example.com',
-      status: 'ACCEPTED' as const,
+      status: EvaluationStatus.ACCEPTED,
       comments: 'Approved!',
       createdAt: new Date('2025-02-02'),
     },
@@ -45,7 +45,7 @@ describe('EvaluationHistory', () => {
 
       // First evaluation
       expect(screen.getByText('evaluator1@example.com')).toBeInTheDocument();
-      expect(screen.getByText('UNDER_REVIEW')).toBeInTheDocument();
+      expect(screen.getByText('NEEDS_REVISION')).toBeInTheDocument();
       expect(screen.getByText('Currently reviewing')).toBeInTheDocument();
 
       // Second evaluation

@@ -10,6 +10,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import FilterDrawer from '../../components/FilterDrawer';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import { applyFiltersAndSort } from '../../utils/filterSortUtils';
 import '@testing-library/jest-dom';
 
 describe('STORY-2.4: FilterDrawer Component', () => {
@@ -144,27 +145,24 @@ describe('STORY-2.4: SkeletonLoader Component', () => {
 describe('STORY-2.4: Filter/Sort Utilities', () => {
   describe('Filtering Logic', () => {
     const mockIdeas = [
-      { id: '1', title: 'Alpha', status: 'SUBMITTED', createdAt: '2026-02-01' },
-      { id: '2', title: 'Beta', status: 'APPROVED', createdAt: '2026-02-02' },
-      { id: '3', title: 'Charlie', status: 'SUBMITTED', createdAt: '2026-02-03' },
+      { id: '1', title: 'Alpha', status: 'SUBMITTED', category: 'Feature', createdAt: '2026-02-01', attachmentCount: 1 },
+      { id: '2', title: 'Beta', status: 'APPROVED', category: 'Bug', createdAt: '2026-02-02', attachmentCount: 0 },
+      { id: '3', title: 'Charlie', status: 'SUBMITTED', category: 'Feature', createdAt: '2026-02-03', attachmentCount: 2 },
     ];
 
     it('should filter ideas by status', () => {
-      const { applyFiltersAndSort } = require('../../utils/filterSortUtils');
       const result = applyFiltersAndSort(mockIdeas, 'SUBMITTED', 'createdAt', 'DESC');
       expect(result).toHaveLength(2);
-      expect(result.every((idea: any) => idea.status === 'SUBMITTED')).toBe(true);
+      expect(result.every((idea: {status: string}) => idea.status === 'SUBMITTED')).toBe(true);
     });
 
     it('should sort ideas by date descending', () => {
-      const { applyFiltersAndSort } = require('../../utils/filterSortUtils');
       const result = applyFiltersAndSort(mockIdeas, undefined, 'createdAt', 'DESC');
       expect(result[0].id).toBe('3');
       expect(result[result.length - 1].id).toBe('1');
     });
 
     it('should sort ideas alphabetically by title', () => {
-      const { applyFiltersAndSort } = require('../../utils/filterSortUtils');
       const result = applyFiltersAndSort(mockIdeas, undefined, 'title', 'ASC');
       expect(result[0].title).toBe('Alpha');
       expect(result[1].title).toBe('Beta');
@@ -172,7 +170,6 @@ describe('STORY-2.4: Filter/Sort Utilities', () => {
     });
 
     it('should combine filter and sort operations', () => {
-      const { applyFiltersAndSort } = require('../../utils/filterSortUtils');
       const result = applyFiltersAndSort(mockIdeas, 'SUBMITTED', 'title', 'ASC');
       expect(result).toHaveLength(2);
       expect(result[0].title).toBe('Alpha');

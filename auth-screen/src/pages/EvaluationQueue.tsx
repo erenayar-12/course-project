@@ -61,6 +61,7 @@ const EvaluationQueue: React.FC = () => {
       setPage(pageNum);
     } catch (err) {
       setError('Failed to load evaluation queue');
+      // eslint-disable-next-line no-console
       console.error('Error fetching queue:', err);
     } finally {
       setIsLoading(false);
@@ -99,7 +100,8 @@ const EvaluationQueue: React.FC = () => {
       setIsModalOpen(false);
       setSelectedIdea(undefined);
     } catch (err) {
-      throw new Error((err as any).response?.data?.message || 'Failed to submit evaluation');
+      const message = (err as unknown as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to submit evaluation';
+      throw new Error(message);
     } finally {
       setIsSubmitting(false);
     }

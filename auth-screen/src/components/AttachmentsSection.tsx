@@ -113,7 +113,8 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({ attachments }) 
         window.open(`/api/attachments/${attachment.id}/download`, '_blank');
       }
     } catch (error) {
-      console.error('Download failed:', error);
+      // Error handling: download failed
+      // console.error('Download failed:', error);
     }
   };
 

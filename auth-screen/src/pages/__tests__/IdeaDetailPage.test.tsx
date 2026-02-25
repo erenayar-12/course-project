@@ -197,7 +197,7 @@ describe('IdeaDetailPage', () => {
   describe('Error Handling', () => {
     it('should handle 403 Forbidden error', async () => {
       const error = new Error('You do not have permission to view this idea.');
-      (error as any).response = { status: 403 };
+      (error as unknown as { response: { status: number } }).response = { status: 403 };
       (mockIdeaService.getIdeaDetail as jest.Mock).mockRejectedValueOnce(error);
 
       renderWithRouter(<IdeaDetailPage />);
@@ -209,7 +209,7 @@ describe('IdeaDetailPage', () => {
 
     it('should handle 404 Not Found error', async () => {
       const error = new Error('Idea not found.');
-      (error as any).response = { status: 404 };
+      (error as unknown as { response: { status: number } }).response = { status: 404 };
       (mockIdeaService.getIdeaDetail as jest.Mock).mockRejectedValueOnce(error);
 
       renderWithRouter(<IdeaDetailPage />);

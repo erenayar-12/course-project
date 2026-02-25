@@ -15,8 +15,8 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock child components
 jest.mock('../../components/EvaluationQueueRow', () => {
-  return function MockRow({ idea }: any) {
-    return <tr data-testid="queue-row"><td>{idea.title}</td></tr>;
+  return function MockRow({ idea }: { idea: Record<string, unknown> }) {
+    return <tr data-testid="queue-row"><td>{String(idea.title)}</td></tr>;
   };
 });
 

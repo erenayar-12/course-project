@@ -109,7 +109,7 @@ class IdeasService {
    * @returns Promise<IdeaDetail> Detailed idea information including attachments and feedback
    * @throws Error on 403 (unauthorized), 404 (not found), or other failures
    */
-  async getIdeaDetail(ideaId: string): Promise<any> {
+  async getIdeaDetail(ideaId: string): Promise<IdeaResponse> {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {

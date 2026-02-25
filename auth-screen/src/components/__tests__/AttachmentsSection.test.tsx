@@ -51,6 +51,7 @@ describe('AttachmentsSection', () => {
 
     it('should not render anything when attachments array is empty', () => {
       // 🔵 ARRANGE
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const emptyAttachments: any[] = [];
 
       // 🟢 ACT

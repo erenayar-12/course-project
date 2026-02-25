@@ -20,33 +20,19 @@ import AttachmentsSection from '../components/AttachmentsSection';
 import RejectionFeedbackSection from '../components/RejectionFeedbackSection';
 import '@testing-library/jest-dom';
 
-interface IdeaDetail {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
+// Use IdeaResponse from ideaSchema instead of custom IdeaDetail
+import { IdeaResponse } from '../types/ideaSchema';
+type IdeaDetail = IdeaResponse;
+
+interface ApiError {
+  response?: {
+    status: number;
+    data?: {
+      message?: string;
+    };
   };
-  attachments: Array<{
-    id: string;
-    originalName: string;
-    fileSize: number;
-    uploadedAt: Date;
-    fileUrl?: string;
-  }>;
-  evaluatorFeedback?: {
-    evaluatorId: string;
-    evaluatorName: string;
-    comments: string;
-    feedbackDate: Date;
-  };
+  status?: number;
+  message?: string;
 }
 
 /**
@@ -92,8 +78,8 @@ const IdeaDetailPage: React.FC = () => {
         const data = await ideasService.getIdeaDetail(ideaId);
         setIdea(data);
       } catch (err) {
-        const error = err as any;
-        const status = error.response?.status || error.status;
+        const error = err as unknown as ApiError;
+        const status = error.response?.status || error.status || 0;
         
         setErrorCode(status);
         
@@ -117,6 +103,17 @@ const IdeaDetailPage: React.FC = () => {
     loadIdea();
   }, [ideaId]);
 
+  // Map IdeaResponse status to StatusBadge status type
+  const mapStatus = (status: string): 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION' => {
+    const statusMap: Record<string, 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'NEEDS_REVISION'> = {
+      'Submitted': 'SUBMITTED',
+      'Under Review': 'UNDER_REVIEW',
+      'Accepted': 'APPROVED',
+      'Rejected': 'REJECTED',
+    };
+    return statusMap[status] || 'SUBMITTED';
+  };
+
   // Handle delete action
   const handleDelete = async () => {
     if (!idea) return;
@@ -126,13 +123,10 @@ const IdeaDetailPage: React.FC = () => {
       setError(null);
       await ideasService.deleteIdea(idea.id);
       
-      // Show success feedback before navigating
-      console.log('Idea deleted successfully');
-      
       // Redirect to dashboard after delete
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      const error = err as any;
+      const error = err as unknown as ApiError;
       const status = error.response?.status || error.status;
       
       if (status === 403) {
@@ -173,7 +167,7 @@ const IdeaDetailPage: React.FC = () => {
         setIdea(data);
       } catch (err) {
         const error = err as any;
-        const status = error.response?.status || error.status;
+        const status = error.response?.status || error.status || 0;
         
         setErrorCode(status);
         
@@ -215,7 +209,7 @@ const IdeaDetailPage: React.FC = () => {
   };
 
   // Determine if idea is editable
-  const isEditable = idea && (idea.status === 'DRAFT' || idea.status === 'SUBMITTED');
+  const isEditable = idea && (idea.status === 'Submitted');
 
   // Loading state - show skeleton loaders
   if (loading) {
@@ -349,7 +343,7 @@ const IdeaDetailPage: React.FC = () => {
               </button>
             )}
 
-            {idea.status === 'DRAFT' && (
+            {idea.status === 'Submitted' && (
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
@@ -370,7 +364,7 @@ const IdeaDetailPage: React.FC = () => {
                 {idea.title}
               </h1>
               <div className="flex-shrink-0">
-                <StatusBadge status={idea.status} />
+                <StatusBadge status={mapStatus(idea.status)} />
               </div>
             </div>
 
@@ -409,7 +403,7 @@ const IdeaDetailPage: React.FC = () => {
           )}
 
           {/* Rejection feedback (if rejected) */}
-          {idea.status === 'REJECTED' && idea.evaluatorFeedback && (
+          {idea.status === 'Rejected' && idea.evaluatorFeedback && (
             <div className="mb-6 sm:mb-8">
               <RejectionFeedbackSection 
                 feedback={idea.evaluatorFeedback}
