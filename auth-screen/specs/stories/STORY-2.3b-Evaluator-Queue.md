@@ -14,6 +14,20 @@
 
 ---
 
+## ✅ Clarifications Integrated (Feb 25, 2026)
+
+This specification has been clarified and is ready for planning. Key clarifications:
+
+- **Queue Sort:** Newest first (createdAt DESC) - most recent submissions at top
+- **Status Filter:** All open statuses shown (SUBMITTED, UNDER_REVIEW, NEEDS_REVISION) 
+- **Evaluation UX:** Multiple evaluators can evaluate same idea (new records created, not replaced)
+- **Status Badges:** Color-coded - reuse StatusBadge from STORY-2.3a
+- **CSV Export:** All table columns (Submitter, Title, Category, Date, Status, Attachments, Assigned To)
+
+See [STORY-2.3b-CLARIFICATIONS.md](../../STORY-2.3b-CLARIFICATIONS.md) for detailed clarification notes.
+
+---
+
 ## User Story
 
 **As a** evaluator/admin  
@@ -31,13 +45,18 @@ Evaluators need a dedicated evaluation queue showing all submitted ideas from al
 - **Given** authenticated user with "evaluator" role navigates to /evaluation-queue
 - **When** dashboard loads
 - **Then** evaluator sees "Evaluation Queue" tab (not "My Ideas")
-- **And** queue displays all ideas with status SUBMITTED, UNDER_REVIEW from all users (not just own)
+- **And** queue displays all ideas with status SUBMITTED, UNDER_REVIEW, NEEDS_REVISION from all users (not just own)
+  - CLARIFICATION: Shows all "open" evaluation statuses (not ACCEPTED/REJECTED/DRAFT)
+  - CLARIFICATION: Sorted by createdAt DESC (newest submissions first)
 - **And** unauthenticated or non-evaluator users are redirected to /login or their allowed dashboard
 
 ### AC 13: Evaluation Queue Shows Required Columns
 - **Given** evaluator views the evaluation queue
 - **When** queue renders
 - **Then** each row displays: Submitter Name, Title, Category, Submission Date, Current Status (badge), Attachment count
+  - CLARIFICATION: Status badge uses color-coding (SUBMITTED=blue, UNDER_REVIEW=yellow, NEEDS_REVISION=orange) - reuse StatusBadge from STORY-2.3a
+  - CLARIFICATION: Attachment count shown as text or icon (e.g., "📎 2 files")
+  - CLARIFICATION: Queue sorted by createdAt DESC (newest first)
 - **And** an "Actions" column with "Review" button
 - **And** checkbox column for bulk selection
 
@@ -50,6 +69,8 @@ Evaluators need a dedicated evaluation queue showing all submitted ideas from al
   - Optionally attach evaluation notes file (file upload)
   - Submit changes button submits to backend
   - Cancel button closes modal without saving
+  - CLARIFICATION: If idea has prior evaluation history, it's displayed below modal in read-only format
+  - CLARIFICATION: Evaluator can SUBMIT NEW evaluation (creates new history record) - allows multiple evaluators to evaluate same idea sequentially
 - **And** original submission and all prior evaluation history remain visible below modal
 - **And** success toast shows after submission
 
@@ -59,9 +80,11 @@ Evaluators need a dedicated evaluation queue showing all submitted ideas from al
 - **Then** bulk actions become available:
   - "Bulk Status Update" to assign same status to selected ideas
   - "Bulk Assign" to reassign evaluation to another evaluator  
-  - "Export" to download selected ideas as CSV
+  - "Export CSV" to download selected ideas as CSV
+    - CLARIFICATION: CSV includes ALL table columns: Submitter, Title, Category, Submission Date, Status, Attachment Count, Assigned To (evaluator)
 - **And** bulk actions include confirmation dialog before executing
 - **And** operation limited to 100 items maximum per request (prevent timeout)
+- **And** CSV export limited to 100 items per request
 
 ### AC 16: Evaluation History Visible in Detail View (Immutable Audit Trail)
 - **Given** evaluator opens an idea for review
@@ -142,10 +165,12 @@ All acceptance criteria must pass automated tests and user/QA sign-off:
 **New Endpoints (HTTP REST):**
 
 1. **GET /api/evaluation-queue** - Fetch submitted ideas
-   - Query params: `status=SUBMITTED,UNDER_REVIEW&limit=10&offset=0`
+   - Query params: `status=SUBMITTED,UNDER_REVIEW,NEEDS_REVISION&limit=10&offset=0` (all open statuses)
+   - Default sort: createdAt DESC (newest first)
    - Auth middleware: Required (JWT)
    - Role: EVALUATOR or ADMIN (roleCheck middleware)
    - Response: `{ ideas: [], pagination: { total, page, pages }, lastEvaluatedAt }`
+   - CLARIFICATION: Returns all ideas with open evaluation statuses (excludes ACCEPTED/REJECTED/DRAFT)
 
 2. **POST /api/ideas/:ideaId/evaluate** - Submit evaluation
    - Body: `{ status: string, comments: string, fileUrl?: string }`
@@ -236,11 +261,11 @@ model User {
 // Extend status enum - ADD new statuses
 enum IdeaStatus {
   DRAFT
-  SUBMITTED
-  UNDER_REVIEW
+  SUBMITTED         // Initial submission by user
+  UNDER_REVIEW      // Evaluator has claimed for review
+  NEEDS_REVISION    // Evaluator requests changes before acceptance
   ACCEPTED
   REJECTED
-  NEEDS_REVISION  // NEW - evaluator can request revision
 }
 ```
 
@@ -288,6 +313,7 @@ CREATE INDEX idx_evaluations_evaluator_created ON ideation_evaluations(evaluator
 - `prisma/schema.prisma` (add IdeationEvaluation model + status enum)
 
 ### Implementation Hints
+- Sort queue by createdAt DESC - show newest submissions first (CLARIFIED)
 - Use React Query for API mutations (POST, PUT, bulk operations)
 - Implement skeleton loaders for queue and modal
 - Use React Context or URL params for role-based view switching
@@ -296,13 +322,18 @@ CREATE INDEX idx_evaluations_evaluator_created ON ideation_evaluations(evaluator
 - Store evaluation form state locally until submit (don't lose data on cancel)
 - Use database constraints to enforce audit trail immutability (cascade delete on idea, but not on evaluation)
 - Consider async CSV export for >1000 items (webhook callback)
+- Reuse StatusBadge component from STORY-2.3a with color-coding (CLARIFIED)
+- Multiple evaluations per idea allowed - each creates new audit record (CLARIFIED)
+- CSV export includes all table columns: Submitter, Title, Category, Date, Status, Attachments, Assigned To (CLARIFIED)
 
 ### Known Limitations or Considerations
-- Evaluator can only see ideas with SUBMITTED/UNDER_REVIEW status (not already approved/rejected)
+- Queue shows all open evaluation statuses: SUBMITTED, UNDER_REVIEW, NEEDS_REVISION (not ACCEPTED/REJECTED/DRAFT)
+- Multiple evaluators can evaluate the same idea sequentially (new evaluation record created, not replaced)
+- Evaluator can only see ideas with open statuses (not already approved/rejected)
 - No real-time notifications for new submissions (evaluator must refresh)
 - Evaluation comments limited to 500 chars (extensible in Phase 2)
 - Bulk operations limited to 100 items per request (prevent query timeout)
-- Single evaluator per idea (no co-evaluation in Phase 1)
+- CSV export limited to 100 items per request
 - No dynamic evaluator reassignment queue balancing (manual in Phase 1)
 - Archive functionality excluded (future enhancement)
 - Multi-language comments not tested (Phase 2)
