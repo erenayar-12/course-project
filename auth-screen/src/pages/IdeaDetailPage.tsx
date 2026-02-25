@@ -15,7 +15,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ideasService } from '../services/ideas.service';
-import { SkeletonLoader } from '../components/SkeletonLoader';
 import { StatusBadge } from '../components/StatusBadge';
 import AttachmentsSection from '../components/AttachmentsSection';
 import RejectionFeedbackSection from '../components/RejectionFeedbackSection';
@@ -221,19 +220,52 @@ const IdeaDetailPage: React.FC = () => {
   // Loading state - show skeleton loaders
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Back button skeleton */}
-          <div className="mb-6 h-10 w-32 bg-gray-200 rounded animate-pulse" />
+          <div className="mb-6 h-8 w-32 bg-gray-200 rounded animate-pulse" />
           
-          {/* Title and status skeleton */}
-          <div className="mb-8 space-y-4">
-            <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
-          </div>
+          {/* Main content card skeleton */}
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
+            {/* Header section skeleton */}
+            <div className="mb-8 pb-8 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                {/* Title skeleton */}
+                <div className="flex-1 min-w-0">
+                  <div className="h-8 bg-gray-200 rounded animate-pulse mb-3" />
+                  <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
+                </div>
+                {/* Status badge skeleton */}
+                <div className="h-8 w-24 bg-gray-200 rounded-full animate-pulse flex-shrink-0" />
+              </div>
 
-          {/* Content skeleton */}
-          <SkeletonLoader count={8} />
+              {/* Metadata skeleton */}
+              <div className="space-y-2">
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-56 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+
+            {/* Description section skeleton */}
+            <div className="mb-8 pb-8 border-b border-gray-200">
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+
+            {/* Attachments skeleton */}
+            <div className="mb-8 pb-8 border-b border-gray-200">
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -294,23 +326,23 @@ const IdeaDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header with back button */}
-        <div className="mb-8 flex items-center justify-between">
+        {/* Header with back button and actions */}
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+            className="text-blue-600 hover:text-blue-800 underline text-sm font-medium inline-flex items-center gap-1 active:opacity-70 transition-opacity"
           >
             ← Back to My Ideas
           </button>
 
-          {/* Edit/Delete buttons */}
-          <div className="flex gap-2">
+          {/* Edit/Delete buttons - responsive layout */}
+          <div className="flex gap-2 flex-wrap">
             {isEditable && (
               <button
                 onClick={handleEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
                 aria-label="Edit idea"
               >
                 Edit
@@ -320,7 +352,7 @@ const IdeaDetailPage: React.FC = () => {
             {idea.status === 'DRAFT' && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+                className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
                 aria-label="Delete idea"
               >
                 Delete
@@ -329,30 +361,41 @@ const IdeaDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main content card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-          {/* Title and status */}
-          <div className="mb-6 pb-6 border-b">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-3xl font-bold text-gray-900">{idea.title}</h1>
-              <StatusBadge status={idea.status} />
+        {/* Main content card - responsive padding */}
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8">
+          {/* Title and status section */}
+          <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">
+                {idea.title}
+              </h1>
+              <div className="flex-shrink-0">
+                <StatusBadge status={idea.status} />
+              </div>
             </div>
-            <p className="text-gray-600 text-sm">
-              Category: <span className="font-medium">{idea.category}</span>
-            </p>
-            <p className="text-gray-600 text-sm mt-2">
-              Submitted: <span className="font-medium">{formatDate(idea.createdAt)}</span>
-            </p>
+
+            {/* Metadata - responsive text sizes */}
+            <div className="space-y-1.5 text-xs sm:text-sm text-gray-600">
+              <p>
+                Category: <span className="font-medium text-gray-900">{idea.category}</span>
+              </p>
+              <p>
+                Submitted: <span className="font-medium text-gray-900">{formatDate(idea.createdAt)}</span>
+              </p>
+              <p>
+                By: <span className="font-medium text-gray-900">{idea.user?.name || 'Unknown'}</span>
+              </p>
+            </div>
           </div>
 
-          {/* Description */}
-          <div className="mb-8 pb-8 border-b">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Description</h2>
-            <p className={`text-gray-700 whitespace-pre-wrap ${isEditable ? '' : 'opacity-75'}`}>
+          {/* Description section */}
+          <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Description</h2>
+            <p className={`text-sm sm:text-base text-gray-700 whitespace-pre-wrap leading-relaxed break-words ${isEditable ? '' : 'opacity-75'}`}>
               {idea.description}
             </p>
             {!isEditable && (
-              <p className="text-sm text-gray-500 mt-3">
+              <p className="text-xs sm:text-sm text-gray-500 mt-3">
                 This idea is submitted for review and cannot be edited.
               </p>
             )}
@@ -360,14 +403,14 @@ const IdeaDetailPage: React.FC = () => {
 
           {/* Attachments */}
           {idea.attachments && idea.attachments.length > 0 && (
-            <div className="mb-8 pb-8 border-b">
+            <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-200">
               <AttachmentsSection attachments={idea.attachments} />
             </div>
           )}
 
           {/* Rejection feedback (if rejected) */}
           {idea.status === 'REJECTED' && idea.evaluatorFeedback && (
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <RejectionFeedbackSection 
                 feedback={idea.evaluatorFeedback}
                 ideaId={idea.id}
@@ -377,36 +420,36 @@ const IdeaDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Delete confirmation modal - responsive */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-          <div className="bg-white rounded-lg shadow-lg max-w-md mx-4 p-6">
-            <h2 id="delete-modal-title" className="text-xl font-bold text-gray-900 mb-4">Delete Idea?</h2>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-auto max-h-screen overflow-y-auto p-6">
+            <h2 id="delete-modal-title" className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Delete Idea?</h2>
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
               This idea will be deleted and moved to trash. You can recover it within 30 days.
             </p>
             {error && (
               <div className="bg-red-50 border border-red-200 rounded p-3 mb-6">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-xs sm:text-sm text-red-700">{error}</p>
               </div>
             )}
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
               <button
                 onClick={() => {
                   setShowDeleteModal(false);
                   setError(null);
                 }}
                 disabled={isDeleting}
-                className="px-4 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm min-h-10"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm min-h-10"
               >
-                {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
