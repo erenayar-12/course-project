@@ -24,6 +24,9 @@ export const paginationSchema = z.object({
     .number()
     .min(0)
     .default(0),
+  status: z.enum(['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION', 'APPROVED', 'REJECTED']).optional(),
+  sortBy: z.enum(['createdAt', 'title']).default('createdAt'),
+  sortOrder: z.enum(['ASC', 'DESC']).default('DESC'),
 });
 
 export const fileUploadSchema = z.object({

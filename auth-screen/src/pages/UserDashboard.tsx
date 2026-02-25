@@ -26,6 +26,9 @@ import { IdeaStatusFilter, type IdeaStatus } from '../components/IdeaStatusFilte
 import { IdeaSortDropdown, type SortBy, type SortOrder } from '../components/IdeaSortDropdown';
 import { FilterChips } from '../components/FilterChips';
 import { EmptyResultsState } from '../components/EmptyResultsState';
+import { FilterDrawer } from '../components/FilterDrawer';
+import { SkeletonLoader } from '../components/SkeletonLoader';
+import { useIdeasLoading } from '../hooks/useIdeasLoading';
 import {
   calculatePaginatedIdeas,
   calculateDashboardStatistics,
@@ -78,6 +81,14 @@ export const UserDashboard: React.FC = () => {
     return (searchParams.get('sortOrder') as SortOrder) || 'DESC';
   });
 
+  // State for mobile drawer
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Loading state management (AC10)
+  const { isLoading: showSkeletonLoader, showLoadingMessage } = useIdeasLoading({
+    timeout: 1000,
+  });
+
   /**
    * Fetch user's ideas from API
    */
@@ -126,11 +137,11 @@ export const UserDashboard: React.FC = () => {
     if (allIdeas.length === 0) {
       setSortedAndPaginatedIdeas([]);
       setPaginationState(null);
+      setFilterLoading(false);
       return;
     }
 
     // Apply filters and sort to all ideas
-    setFilterLoading(true);
     const status = selectedStatus === 'ALL' ? undefined : (selectedStatus as Exclude<IdeaStatus, 'ALL'>);
     const filtered = applyFiltersAndSort(allIdeas, status, sortBy, sortOrder);
 
@@ -141,6 +152,8 @@ export const UserDashboard: React.FC = () => {
     // Get paginated subset
     const paginated = calculatePaginatedIdeas(filtered as any, currentPage, ITEMS_PER_PAGE) as Idea[];
     setSortedAndPaginatedIdeas(paginated);
+    
+    // Disable loading state after filtering completes (AC10)
     setFilterLoading(false);
   }, [allIdeas, currentPage, selectedStatus, sortBy, sortOrder]);
 
@@ -150,6 +163,7 @@ export const UserDashboard: React.FC = () => {
   const handleStatusChange = (newStatus: IdeaStatus) => {
     setSelectedStatus(newStatus);
     setCurrentPage(1); // Reset to page 1
+    setFilterLoading(true); // Trigger skeleton loaders (AC10)
 
     // Update URL parameters
     const params = new URLSearchParams(searchParams);
@@ -168,6 +182,7 @@ export const UserDashboard: React.FC = () => {
     setSortBy(newSortBy);
     setSortOrder(newSortOrder);
     setCurrentPage(1); // Reset to page 1
+    setFilterLoading(true); // Trigger skeleton loaders (AC10)
 
     // Update URL parameters
     const params = new URLSearchParams(searchParams);
@@ -232,9 +247,25 @@ export const UserDashboard: React.FC = () => {
   // AC8: Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        <span className="ml-4 text-lg text-gray-600">Loading your ideas...</span>
+      <div className="min-h-screen bg-gray-50 py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Ideas</h1>
+          <p className="text-gray-600 mb-8">Track and manage your submitted ideas</p>
+
+          {/* Skeleton loaders for optimistic loading UI (AC10) */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+              <div className="h-10 w-20 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <SkeletonLoader count={2} rowHeight={40} variant="blocks" />
+          </div>
+
+          {/* Skeleton table rows */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <SkeletonLoader count={5} variant="rows" rowHeight={60} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -315,8 +346,31 @@ export const UserDashboard: React.FC = () => {
           />
         )}
 
-        {/* STORY-2.4 AC1, AC2: Filter and Sort Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        {/* Mobile Filter Drawer Toggle Button */}
+        <div className="md:hidden mb-6 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-gray-900">Sort & Filter</h2>
+          <button
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            {drawerOpen ? 'Close' : 'Open'} Filters
+          </button>
+        </div>
+
+        {/* Mobile Filter Drawer (hidden on desktop) */}
+        <FilterDrawer
+          selectedStatus={selectedStatus}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onStatusChange={handleStatusChange}
+          onSortChange={handleSortChange}
+          onDrawerToggle={setDrawerOpen}
+          onClearAll={handleClearAll}
+          isOpen={drawerOpen}
+        />
+
+        {/* STORY-2.4 AC1, AC2: Filter and Sort Controls (Desktop only) */}
+        <div className="hidden md:block bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <IdeaStatusFilter
               selectedStatus={selectedStatus}
@@ -341,7 +395,10 @@ export const UserDashboard: React.FC = () => {
             onClearAll={handleClearAll}
           />
 
-          {filterLoading && <p className="text-sm text-gray-500 mt-4">Filtering ideas...</p>}
+          {/* AC10: Loading message for filter operations */}
+          {filterLoading && showLoadingMessage && (
+            <p className="text-sm text-gray-500 mt-4">Filtering ideas...</p>
+          )}
         </div>
 
         {/* STORY-2.4 AC11: Empty results state or ideas table */}
@@ -349,28 +406,37 @@ export const UserDashboard: React.FC = () => {
           <EmptyResultsState hasFilters={selectedStatus !== 'ALL'} onClearFilters={handleClearAll} />
         ) : (
           <>
-            {/* AC1, AC2, AC7: Ideas Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-100 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Title</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Category</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date Submitted</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Attachments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedAndPaginatedIdeas.map((idea) => (
-                    <IdeaListItem key={idea.id} idea={idea} onNavigate={handleNavigateToIdea} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* AC10: Show skeleton loaders during filtering */}
+            {filterLoading && showSkeletonLoader && (
+              <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <SkeletonLoader count={3} variant="rows" rowHeight={60} />
+              </div>
+            )}
+
+            {/* AC1, AC2, AC7: Ideas Table (hidden while loading) */}
+            {!filterLoading && (
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Title</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Category</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date Submitted</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Attachments</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedAndPaginatedIdeas.map((idea) => (
+                      <IdeaListItem key={idea.id} idea={idea} onNavigate={handleNavigateToIdea} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* AC5: Pagination Controls */}
-            {paginationState && (
+            {paginationState && !filterLoading && (
               <div className="mt-8 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
                   Showing {paginationState.startItem} to {paginationState.endItem} of {paginationState.totalItems} ideas

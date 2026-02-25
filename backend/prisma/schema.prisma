@@ -60,6 +60,8 @@ model Idea {
   @@index([userId])
   @@index([status])
   @@index([category])
+  @@index([userId, status, createdAt(sort: Desc)])
+  @@index([userId, title])
 }
 
 model IdeaAttachment {

@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
 export interface PaginationParams {
   limit: number;
   offset: number;
+  status?: string;
+  sortBy?: 'createdAt' | 'title';
+  sortOrder?: 'ASC' | 'DESC';
 }
 
 export class IdeasService {
@@ -57,9 +60,21 @@ export class IdeasService {
       throw new Error('User not found');
     }
 
+    // Build where clause with optional status filter
+    const where: any = { userId: user.id };
+    if (params.status) {
+      where.status = params.status;
+    }
+
+    // Build orderBy clause
+    const orderBy: any = {};
+    const sortBy = params.sortBy || 'createdAt';
+    const sortOrder = params.sortOrder || 'DESC';
+    orderBy[sortBy] = sortOrder.toLowerCase();
+
     const [ideas, total] = await Promise.all([
       prisma.idea.findMany({
-        where: { userId: user.id },
+        where,
         include: {
           attachments: {
             select: {
@@ -70,12 +85,12 @@ export class IdeasService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         take: params.limit,
         skip: params.offset,
       }),
       prisma.idea.count({
-        where: { userId: user.id },
+        where,
       }),
     ]);
 

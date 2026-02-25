@@ -84,7 +84,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/ideas - List user's ideas
+// GET /api/ideas - List user's ideas with optional filtering and sorting
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const validated = paginationSchema.parse(req.query);
@@ -101,6 +101,14 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     const err = error as any;
+    if (err.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid query parameters',
+        errors: err.errors,
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: err.message || 'Failed to fetch ideas',
