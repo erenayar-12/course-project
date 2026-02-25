@@ -187,6 +187,129 @@ class IdeasService {
       throw error instanceof Error ? error : new Error('Failed to delete idea');
     }
   }
+
+  /**
+   * Updates an existing idea (STORY-2.6).
+   * 
+   * @param ideaId - The ID of the idea to update
+   * @param data - Updated idea data (title, description, category)
+   * @returns Promise<IdeaResponse> Updated idea with new data
+   * @throws Error on 400 (validation), 403 (unauthorized), 404 (not found), or other failures
+   */
+  async updateIdea(ideaId: string, data: { title: string; description: string; category: string }): Promise<IdeaResponse> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      const response = await this.api.put<{ success: boolean; data: IdeaResponse }>(
+        `/ideas/${ideaId}`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error('Failed to update idea');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<any>;
+
+        if (axiosError.response?.status === 400) {
+          const errorData = axiosError.response.data;
+          throw new Error(errorData?.message || 'Validation failed');
+        }
+
+        if (axiosError.response?.status === 403) {
+          throw new Error("You don't have permission to edit this idea");
+        }
+
+        if (axiosError.response?.status === 404) {
+          throw new Error('Idea not found');
+        }
+
+        if (axiosError.response?.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+
+        if (axiosError.response?.status === 500) {
+          throw new Error('Server error. Please try again later.');
+        }
+      }
+
+      throw error instanceof Error ? error : new Error('Failed to update idea');
+    }
+  }
+
+  /**
+   * Uploads attachment files for an idea (STORY-2.6).
+   * Uses FormData for multipart file upload.
+   * 
+   * @param ideaId - The ID of the idea to attach files to
+   * @param files - Array of files to upload
+   * @throws Error on 401 (unauthorized), 404 (not found), or upload failures
+   */
+  async uploadAttachments(ideaId: string, files: File[]): Promise<void> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+
+      const response = await this.api.post(
+        `/ideas/${ideaId}/upload`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error('Failed to upload attachment files');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<any>;
+
+        if (axiosError.response?.status === 403) {
+          throw new Error("You don't have permission to upload files for this idea");
+        }
+
+        if (axiosError.response?.status === 404) {
+          throw new Error('Idea not found');
+        }
+
+        if (axiosError.response?.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+
+        if (axiosError.response?.status === 413) {
+          throw new Error('File size too large. Maximum 10MB per file.');
+        }
+
+        if (axiosError.response?.status === 400) {
+          const errorData = axiosError.response.data;
+          throw new Error(errorData?.message || 'Invalid file type or upload error');
+        }
+      }
+
+      throw error instanceof Error ? error : new Error('Failed to upload attachment files');
+    }
+  }
 }
 
 export const ideasService = new IdeasService();
