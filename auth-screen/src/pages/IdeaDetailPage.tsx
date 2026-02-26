@@ -18,7 +18,6 @@ import { ideasService } from '../services/ideas.service';
 import { StatusBadge } from '../components/StatusBadge';
 import AttachmentsSection from '../components/AttachmentsSection';
 import RejectionFeedbackSection from '../components/RejectionFeedbackSection';
-import '@testing-library/jest-dom';
 
 // Use IdeaResponse from ideaSchema instead of custom IdeaDetail
 import { IdeaResponse } from '../types/ideaSchema';

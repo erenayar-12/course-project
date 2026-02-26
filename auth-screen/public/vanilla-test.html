@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanilla JS Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; }
+        body {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            color: white;
+            font-size: 32px;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+        h1 { font-size: 48px; margin-bottom: 1rem; }
+        p { margin: 0.5rem 0; font-size: 24px; }
+        .button { 
+            background: white; 
+            color: #FF6B6B; 
+            border: none; 
+            padding: 1rem 2rem; 
+            font-size: 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin-top: 2rem;
+        }
+        .button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✓✓✓ VANILLA JS TEST ✓✓✓</h1>
+        <p>If you see this, the server is working!</p>
+        <p>Browser can render HTML: YES</p>
+        <button class="button" onclick="testReact()">Test React Loading</button>
+        <p id="react-test" style="margin-top: 2rem; font-size: 18px; color: #FFD700;"></p>
+    </div>
+
+    <script>
+        console.log('✓ Vanilla JS page loaded');
+        
+        function testReact() {
+            document.getElementById('react-test').innerText = 'Checking if React components load...';
+            console.log('Testing React at: ' + new Date().toLocaleTimeString());
+            
+            // Simulate checking React mount
+            setTimeout(() => {
+                const rootEl = document.getElementById('root');
+                if (rootEl && rootEl.innerHTML) {
+                    document.getElementById('react-test').innerText = '✓ React components detected!';
+                } else {
+                    document.getElementById('react-test').innerText = '✗ React is not rendering to #root';
+                    console.error('Root element not found or empty');
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>

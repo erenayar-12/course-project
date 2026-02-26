@@ -3,18 +3,9 @@ import React, { useState } from 'react';
 import { useMockAuth0 } from '../context/MockAuth0Context';
 
 /**
- * LoginPage Component
- *
- * Displays a responsive login form with email and password inputs.
- * Integrates Auth0 authentication (STORY-EPIC-1.2).
- *
- * Features:
- * - Responsive design (mobile, tablet, desktop)
- * - WCAG AA accessible form elements
- * - Auth0 integration for secure login
- * - Error message display
- * - Loading state during authentication
- * - Link to registration page
+ * LoginPage Component - Simplified Version
+ * 
+ * Displays a responsive login form using inline styles for maximum compatibility
  */
 
 interface LoginFormData {
@@ -42,21 +33,18 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.email || !formData.password) {
       setLocalError('Please enter both email and password.');
       return;
     }
 
     try {
-      // Send login request to Auth0
       await loginWithRedirect({
         authorizationParams: {
           login_hint: formData.email,
         },
       });
     } catch (err) {
-      // Generic error message for security (AC 2)
       setLocalError('Invalid email or password. Please try again.');
     }
   };
@@ -64,48 +52,45 @@ const LoginPage: React.FC = () => {
   const displayError = error || localError ? 'Invalid email or password. Please try again.' : null;
 
   return (
-    <main className="responsive min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+    <main style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'}}>
+      <div style={{width: '100%', maxWidth: '28rem', background: 'white', borderRadius: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '2rem'}}>
         {/* Heading */}
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Login</h1>
+        <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', textAlign: 'center', color: '#1f2937', marginBottom: '2rem'}}>
+          Login
+        </h1>
 
-        {/* Error Message Display (AC 2) */}
+        {/* Error Message */}
         {displayError && (
-          <div
-            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
-            role="alert"
-            aria-live="polite"
-          >
-            <p className="text-sm text-red-700">{displayError}</p>
+          <div style={{marginBottom: '1.5rem', padding: '1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', color: '#b91c1c'}}>
+            <p style={{fontSize: '0.875rem'}}>{displayError}</p>
           </div>
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-              <span className="text-red-500 ml-1">*</span>
+            <label htmlFor="email" style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem'}}>
+              Email <span style={{color: '#ef4444'}}>*</span>
             </label>
             <input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="admin@admin.com"
               required
               value={formData.email}
               onChange={handleInputChange}
               disabled={isLoading}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-              aria-label="Email"
+              style={{width: '100%', padding: '0.5rem 1rem', border: '2px solid #d1d5db', borderRadius: '0.5rem', fontSize: '1rem', outline: 'none', transition: 'all 200ms', opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'text'}}
+              onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
 
           {/* Password Field */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-              <span className="text-red-500 ml-1">*</span>
+            <label htmlFor="password" style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem'}}>
+              Password <span style={{color: '#ef4444'}}>*</span>
             </label>
             <input
               id="password"
@@ -115,39 +100,38 @@ const LoginPage: React.FC = () => {
               value={formData.password}
               onChange={handleInputChange}
               disabled={isLoading}
-              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-              aria-label="Password"
+              style={{width: '100%', padding: '0.5rem 1rem', border: '2px solid #d1d5db', borderRadius: '0.5rem', fontSize: '1rem', outline: 'none', transition: 'all 200ms', opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'text'}}
+              onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
 
-          {/* Sign In Button with Loading State (AC 5) */}
+          {/* Sign In Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{width: '100%', padding: '0.75rem', background: '#4f46e5', color: 'white', fontWeight: '600', borderRadius: '0.5rem', border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.7 : 1, transition: 'all 200ms'}}
+            onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = '#4338ca')}
+            onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = '#4f46e5')}
           >
-            {isLoading ? (
-              <>
-                <span className="inline-block animate-spin">⏳</span>
-                Logging in...
-              </>
-            ) : (
-              'Sign In'
-            )}
+            {isLoading ? '⏳ Logging in...' : 'Sign In'}
           </button>
         </form>
 
         {/* Registration Link */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
-            Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline transition-colors"
-            >
-              Register here
-            </Link>
+        <div style={{marginTop: '1.5rem', textAlign: 'center'}}>
+          <p style={{color: '#4b5563', fontSize: '0.875rem'}}>
+            Don't have an account? <Link to="/register" style={{color: '#4f46e5', fontWeight: '600', textDecoration: 'none', cursor: 'pointer'}}>Register here</Link>
           </p>
+        </div>
+
+        {/* Test Credentials */}
+        <div style={{marginTop: '2rem', padding: '1rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.5rem'}}>
+          <p style={{fontSize: '0.75rem', fontWeight: '600', color: '#1e3a8a', marginBottom: '0.5rem'}}>📝 Test Credentials:</p>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem', color: '#1e40af'}}>
+            <p><strong>Admin:</strong> admin@admin.com (any password)</p>
+            <p><strong>User:</strong> user@user.com (any password)</p>
+          </div>
         </div>
       </div>
     </main>

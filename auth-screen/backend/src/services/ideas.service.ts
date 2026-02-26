@@ -233,6 +233,80 @@ export class IdeasService {
 
     return attachment;
   }
+
+  /**
+   * Get evaluation queue: all ideas with status "Submitted" or "Under Review"
+   * sorted by createdAt ascending (oldest first - FIFO)
+   * @param limit - Items per page
+   * @param offset - Skip N items (for pagination)
+   * @returns Array of ideas with submitter name and days in queue
+   */
+  async getEvaluationQueue(
+    limit: number = 25,
+    offset: number = 0
+  ) {
+    // Get ideas with "Submitted" or "Under Review" status
+    const ideas = await prisma.idea.findMany({
+      where: {
+        status: {
+          in: ['SUBMITTED', 'UNDER_REVIEW'],
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        createdAt: true,
+        status: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc', // Oldest first (FIFO)
+      },
+      take: limit,
+      skip: offset,
+    });
+
+    // Get total count for pagination
+    const totalCount = await prisma.idea.count({
+      where: {
+        status: {
+          in: ['SUBMITTED', 'UNDER_REVIEW'],
+        },
+      },
+    });
+
+    // Calculate days in queue for each idea
+    const now = new Date();
+    const formattedIdeas = ideas.map(idea => {
+      const daysInQueue = Math.floor(
+        (now.getTime() - idea.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        id: idea.id,
+        title: idea.title,
+        submitterName: idea.user.name || 'Unknown',
+        category: idea.category,
+        createdAt: idea.createdAt.toISOString(),
+        status: idea.status === 'SUBMITTED' ? 'Submitted' : 'Under Review',
+        daysInQueue,
+      };
+    });
+
+    return {
+      data: formattedIdeas,
+      pagination: {
+        total: totalCount,
+        limit,
+        offset,
+      },
+    };
+  }
 }
 
 export const ideasService = new IdeasService();

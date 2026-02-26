@@ -349,6 +349,53 @@ router.get(
 );
 
 /**
+ * STORY-3.1: Get evaluation queue with pagination
+ * GET /api/evaluation-queue?page=1&limit=25
+ * Returns all ideas with status "Submitted" or "Under Review"
+ * Sorted by createdAt ascending (oldest first - FIFO)
+ */
+router.get(
+  '/evaluation-queue',
+  authMiddleware,
+  roleCheck(['evaluator', 'admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+
+      // Validate pagination params
+      if (page < 1 || limit < 1 || limit > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid pagination parameters. Page must be >= 1, limit between 1-100.',
+        });
+      }
+
+      const offset = (page - 1) * limit;
+
+      const result = await ideasService.getEvaluationQueue(limit, offset);
+
+      res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: {
+          page,
+          limit,
+          total: result.pagination.total,
+          totalPages: Math.ceil(result.pagination.total / limit),
+        },
+      });
+    } catch (err: any) {
+      console.error('Evaluation queue error:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch evaluation queue',
+      });
+    }
+  }
+);
+
+/**
  * STORY-2.3b AC15: Bulk operations with role validation
  * POST /api/evaluation-queue/bulk-status-update - Bulk status update (evaluator/admin only)
  */

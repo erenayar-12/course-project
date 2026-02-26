@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">71.42% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -157,7 +157,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -165,8 +165,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -181,22 +181,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -236,7 +236,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * STORY-2.3b: EvaluationHistory Component
  * 
@@ -244,7 +244,7 @@
  * AC 16: Shows evaluation history with date, evaluator, status, comments
  */
 &nbsp;
-import React from 'react';
+<span class="cstat-no" title="statement not covered" >import React from 'react';</span>
 import { IdeationEvaluation } from '../types/evaluationTypes';
 &nbsp;
 interface EvaluationHistoryProps {
@@ -252,8 +252,8 @@ interface EvaluationHistoryProps {
 }
 &nbsp;
 // Format datetime for display
-const formatDateTime = (date: Date): string =&gt; {
-  return new Date(date).toLocaleString('en-US', {
+const formatDateTime = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ate: Date): string =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  return new Date(date).toLocaleString('en-US', {</span>
     month: '2-digit',
     day: '2-digit',
     year: 'numeric',
@@ -268,22 +268,22 @@ const formatDateTime = (date: Date): string =&gt; {
  * Displays all past evaluations in chronological order (immutable audit trail)
  * Supports AC16: Read-only evaluation history timeline
  */
-const EvaluationHistory: React.FC&lt;EvaluationHistoryProps&gt; = ({ evaluations }) =&gt; {
-  if (evaluations.length === 0) {
-    return (
+const EvaluationHistory: React.FC&lt;EvaluationHistoryProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> evaluations }) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (evaluations.length === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    return (</span>
       &lt;div data-testid="empty-history" className="mt-6 p-4 bg-gray-50 rounded-lg"&gt;
         &lt;p className="text-gray-500 text-sm"&gt;No evaluation history&lt;/p&gt;
       &lt;/div&gt;
     );
   }
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div data-testid="evaluation-history" className="mt-6"&gt;
       &lt;h3 className="text-lg font-semibold mb-4 text-gray-800"&gt;Evaluation History&lt;/h3&gt;
       
       &lt;div className="space-y-4"&gt;
-        {evaluations.map((evaluation) =&gt; (
-          &lt;div
+        {evaluations.map(<span class="fstat-no" title="function not covered" >(e</span>valuation) =&gt; (
+<span class="cstat-no" title="statement not covered" >          &lt;div</span>
             key={evaluation.id}
             data-testid="evaluation-item"
             className="p-4 border-l-4 border-blue-500 bg-blue-50 rounded"
@@ -298,7 +298,7 @@ const EvaluationHistory: React.FC&lt;EvaluationHistoryProps&gt; = ({ evaluations
                   ? 'bg-green-100 text-green-800'
                   : evaluation.status === 'REJECTED'
                   ? 'bg-red-100 text-red-800'
-                  : <span class="branch-1 cbranch-no" title="branch not covered" >'bg-yellow-100 text-yellow-800'</span>
+                  : 'bg-yellow-100 text-yellow-800'
               }`}&gt;
                 {evaluation.status}
               &lt;/span&gt;
@@ -307,7 +307,7 @@ const EvaluationHistory: React.FC&lt;EvaluationHistoryProps&gt; = ({ evaluations
             &lt;p className="text-gray-700 mb-2"&gt;{evaluation.comments}&lt;/p&gt;
             
             {evaluation.fileUrl &amp;&amp; (
-<span class="branch-1 cbranch-no" title="branch not covered" >              &lt;a</span>
+              &lt;a
                 href={evaluation.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -323,7 +323,7 @@ const EvaluationHistory: React.FC&lt;EvaluationHistoryProps&gt; = ({ evaluations
   );
 };
 &nbsp;
-export default EvaluationHistory;
+<span class="cstat-no" title="statement not covered" >export default EvaluationHistory;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -331,7 +331,7 @@ export default EvaluationHistory;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-25T15:55:00.633Z
+                at 2026-02-26T07:51:59.688Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

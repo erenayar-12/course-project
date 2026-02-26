@@ -37,6 +37,7 @@ import {
   type DashboardStatistics,
 } from '../utils/dashboardUtils';
 import { applyFiltersAndSort } from '../utils/filterSortUtils';
+import { apiGet } from '../api/client';
 
 interface Idea {
   id: string;
@@ -98,18 +99,10 @@ export const UserDashboard: React.FC = () => {
       setError(null);
 
       // AC8: Loading state
-      const response = await fetch('/api/ideas?limit=1000&offset=0', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const data = await apiGet<{ ideas: unknown[] }>('/ideas', {
+        params: { limit: 1000, offset: 0 },
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ideas: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       const ideas = data.ideas || [];
 
       // Store raw ideas (filtering/sorting applied in useEffect)

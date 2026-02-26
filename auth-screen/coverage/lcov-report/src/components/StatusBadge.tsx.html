@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">30% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>3/10</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">22.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>2/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -154,7 +154,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -166,7 +166,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -174,7 +174,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,7 +183,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -191,7 +191,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -199,11 +199,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">43x</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -240,8 +240,8 @@ interface StatusBadgeProps {
  * @param status - The idea status
  * @returns Object with background and text color classes
  */
-function getStatusColorClasses(status: StatusBadgeProps['status']): { bg: string; text: string } {
-  const colorMap = {
+function <span class="fstat-no" title="function not covered" >getStatusColorClasses(</span>status: StatusBadgeProps['status']): { bg: string; text: string } {
+  const colorMap = <span class="cstat-no" title="statement not covered" >{</span>
     DRAFT: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
     SUBMITTED: { bg: 'bg-blue-100', text: 'text-blue-800' },
     UNDER_REVIEW: { bg: 'bg-orange-100', text: 'text-orange-800' },
@@ -249,7 +249,7 @@ function getStatusColorClasses(status: StatusBadgeProps['status']): { bg: string
     APPROVED: { bg: 'bg-green-100', text: 'text-green-800' },
     REJECTED: { bg: 'bg-red-100', text: 'text-red-800' },
   };
-  return colorMap[status];
+<span class="cstat-no" title="statement not covered" >  return colorMap[status];</span>
 }
 &nbsp;
 /**
@@ -257,8 +257,8 @@ function getStatusColorClasses(status: StatusBadgeProps['status']): { bg: string
  * @param status - The idea status
  * @returns Formatted status string
  */
-function formatStatusText(status: StatusBadgeProps['status']): string {
-  const statusMap = {
+function <span class="fstat-no" title="function not covered" >formatStatusText(</span>status: StatusBadgeProps['status']): string {
+  const statusMap = <span class="cstat-no" title="statement not covered" >{</span>
     DRAFT: 'Draft',
     SUBMITTED: 'Submitted',
     UNDER_REVIEW: 'Under Review',
@@ -266,7 +266,7 @@ function formatStatusText(status: StatusBadgeProps['status']): string {
     APPROVED: 'Approved',
     REJECTED: 'Rejected',
   };
-  return statusMap[status];
+<span class="cstat-no" title="statement not covered" >  return statusMap[status];</span>
 }
 &nbsp;
 /**
@@ -274,11 +274,11 @@ function formatStatusText(status: StatusBadgeProps['status']): string {
  * @param status - The idea status to display
  * @returns Color-coded badge component
  */
-export const StatusBadge: React.FC&lt;StatusBadgeProps&gt; = ({ status }) =&gt; {
-  const colors = getStatusColorClasses(status);
-  const displayText = formatStatusText(status);
+export const StatusBadge: React.FC&lt;StatusBadgeProps&gt; = <span class="fstat-no" title="function not covered" >({</span> status }) =&gt; {
+  const colors = <span class="cstat-no" title="statement not covered" >getStatusColorClasses(status);</span>
+  const displayText = <span class="cstat-no" title="statement not covered" >formatStatusText(status);</span>
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;span
       data-testid="status-badge"
       role="status"
@@ -295,7 +295,7 @@ export const StatusBadge: React.FC&lt;StatusBadgeProps&gt; = ({ status }) =&gt; 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-25T15:55:00.633Z
+                at 2026-02-26T07:51:59.688Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

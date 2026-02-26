@@ -32,6 +32,16 @@ export const Navbar: React.FC = () => {
                 Dashboard
               </Link>
 
+              {/* Evaluation Queue Link - Only for evaluators and admins */}
+              {(user.role === 'evaluator' || user.role === 'admin') && (
+                <Link
+                  to="/evaluation-queue"
+                  className="hover:text-indigo-200 transition-colors font-semibold"
+                >
+                  Queue
+                </Link>
+              )}
+
               {/* User Info */}
               <div className="text-sm opacity-90">
                 <span className="block">{user.email}</span>
