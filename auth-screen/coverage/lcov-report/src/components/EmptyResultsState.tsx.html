@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>3/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -134,7 +134,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,11 +146,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -191,7 +191,7 @@
  * /&gt;
  */
 &nbsp;
-<span class="cstat-no" title="statement not covered" >import React from 'react';</span>
+import React from 'react';
 &nbsp;
 interface EmptyResultsStateProps {
   /** Whether filters/sort are currently active */
@@ -203,26 +203,26 @@ interface EmptyResultsStateProps {
 /**
  * Empty state for filtered results (AC11)
  */
-export const <span class="cstat-no" title="statement not covered" >EmptyResultsState: React.FC&lt;EmptyResultsStateProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>{</span></span>
+export const EmptyResultsState: React.FC&lt;EmptyResultsStateProps&gt; = ({
   hasFilters = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
   onClearFilters,
 }) =&gt; {
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;div
       className="flex flex-col items-center justify-center py-12 px-4"
       data-testid="empty-results-state"
     &gt;
       &lt;div className="text-6xl mb-4"&gt;🔍&lt;/div&gt;
       &lt;h3 className="text-lg font-semibold text-gray-900 mb-2"&gt;
-        {hasFilters ? 'No ideas match your filters' : 'No ideas yet'}
+        {hasFilters ? <span class="branch-0 cbranch-no" title="branch not covered" >'No ideas match your filters' </span>: 'No ideas yet'}
       &lt;/h3&gt;
       &lt;p className="text-gray-600 text-center mb-6 max-w-sm"&gt;
         {hasFilters
-          ? 'Try adjusting your filters or sorting to find what you need.'
+          ? <span class="branch-0 cbranch-no" title="branch not covered" >'Try adjusting your filters or sorting to find what you need.'</span>
           : 'Start by submitting your first idea to see it appear here.'}
       &lt;/p&gt;
-      {hasFilters &amp;&amp; onClearFilters &amp;&amp; (
-        &lt;button
+      {hasFilters &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >onClearFilters </span>&amp;&amp; (
+<span class="branch-2 cbranch-no" title="branch not covered" >        &lt;button</span>
           onClick={onClearFilters}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           data-testid="clear-filters-cta"
@@ -241,7 +241,7 @@ export const <span class="cstat-no" title="statement not covered" >EmptyResultsS
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-26T07:51:59.688Z
+                at 2026-02-26T08:47:43.891Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

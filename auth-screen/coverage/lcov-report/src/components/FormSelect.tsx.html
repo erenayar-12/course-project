@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">61.53% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>8/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -145,7 +145,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -159,7 +159,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -171,10 +171,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">69x</span>
+<span class="cline-any cline-yes">69x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">69x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -199,7 +199,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">384x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -214,15 +214,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * FormSelect.tsx
  * Reusable select/dropdown component for form fields.
  */
 &nbsp;
-<span class="cstat-no" title="statement not covered" >import React, { forwardRef } from 'react';</span>
+import React, { forwardRef } from 'react';
 import { FieldError } from 'react-hook-form';
 &nbsp;
 interface FormSelectProps {
@@ -236,22 +236,22 @@ interface FormSelectProps {
 /**
  * Reusable select field with error display and accessibility.
  */
-export const <span class="cstat-no" title="statement not covered" >FormSelect = forwardRef&lt;HTMLSelectElement, FormSelectProps &amp; React.SelectHTMLAttributes&lt;HTMLSelectElement&gt;&gt;(</span>
-<span class="fstat-no" title="function not covered" >  (</span>
+export const FormSelect = forwardRef&lt;HTMLSelectElement, FormSelectProps &amp; React.SelectHTMLAttributes&lt;HTMLSelectElement&gt;&gt;(
+  (
     {
       name,
       label,
       options,
       error,
-      disabled = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
+      disabled = false,
       ...props
     },
     ref
   ) =&gt; {
-    const errorId = <span class="cstat-no" title="statement not covered" >`${name}-error`;</span>
-    const hasError = <span class="cstat-no" title="statement not covered" >!!error;</span>
+    const errorId = `${name}-error`;
+    const hasError = !!error;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return (</span>
+    return (
       &lt;div className="mb-4"&gt;
         {label &amp;&amp; (
           &lt;label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1"&gt;
@@ -264,25 +264,25 @@ export const <span class="cstat-no" title="statement not covered" >FormSelect = 
           name={name}
           disabled={disabled}
           aria-invalid={hasError}
-          aria-describedby={hasError ? errorId : undefined}
+          aria-describedby={hasError ? <span class="branch-0 cbranch-no" title="branch not covered" >errorId </span>: undefined}
           className={`
             w-full px-3 py-2 border rounded-md shadow-sm
             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-            ${hasError ? 'border-red-500' : 'border-gray-300'}
-            ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}
+            ${hasError ? <span class="branch-0 cbranch-no" title="branch not covered" >'border-red-500' </span>: 'border-gray-300'}
+            ${disabled ? <span class="branch-0 cbranch-no" title="branch not covered" >'bg-gray-100 cursor-not-allowed' </span>: 'bg-white'}
             transition-colors
           `}
           {...props}
         &gt;
-          &lt;option value=""&gt;Select {label?.toLowerCase() || 'option'}&lt;/option&gt;
-          {options.map(<span class="fstat-no" title="function not covered" >(o</span>pt) =&gt; (
-<span class="cstat-no" title="statement not covered" >            &lt;option key={opt.value} v</span>alue={opt.value}&gt;
+          &lt;option value=""&gt;Select {label?.toLowerCase() || <span class="branch-1 cbranch-no" title="branch not covered" >'option'}</span>&lt;/option&gt;
+          {options.map((opt) =&gt; (
+            &lt;option key={opt.value} value={opt.value}&gt;
               {opt.label}
             &lt;/option&gt;
           ))}
         &lt;/select&gt;
         {hasError &amp;&amp; (
-          &lt;p id={errorId} className="mt-1 text-sm text-red-500"&gt;
+<span class="branch-1 cbranch-no" title="branch not covered" >          &lt;p id={errorId} className="mt-1 text-sm text-red-500"&gt;</span>
             {error.message}
           &lt;/p&gt;
         )}
@@ -291,9 +291,9 @@ export const <span class="cstat-no" title="statement not covered" >FormSelect = 
   }
 );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >FormSelect.displayName = 'FormSelect';</span>
+FormSelect.displayName = 'FormSelect';
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default FormSelect;</span>
+export default FormSelect;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -301,7 +301,7 @@ export const <span class="cstat-no" title="statement not covered" >FormSelect = 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-26T07:51:59.688Z
+                at 2026-02-26T08:47:43.891Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

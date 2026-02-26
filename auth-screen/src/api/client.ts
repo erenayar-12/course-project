@@ -3,7 +3,10 @@
  * Adds Bearer token to all requests
  */
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL =
+  (import.meta && import.meta.env && (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' || import.meta.env.MODE === 'e2e'))
+    ? 'http://localhost:3001/api'
+    : '/api';
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;

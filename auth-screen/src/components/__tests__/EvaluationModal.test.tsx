@@ -91,7 +91,7 @@ describe('EvaluationModal', () => {
       );
 
       // Fill in form
-      const statusSelect = screen.getByDisplayValue('');
+      const statusSelect = screen.getByLabelText(/evaluation status/i) as HTMLSelectElement;
       await user.selectOptions(statusSelect, 'ACCEPTED');
 
       const commentsTextarea = screen.getByPlaceholderText(/comments/i);

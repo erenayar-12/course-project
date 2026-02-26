@@ -9,7 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useMockAuth0 } from '../context/MockAuth0Context';
 
-export const Navbar: React.FC = () => {
+const Navbar: React.FC = () => {
   const { user, logout } = useMockAuth0();
 
   return (

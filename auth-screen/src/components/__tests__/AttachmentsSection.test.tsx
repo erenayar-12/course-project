@@ -70,7 +70,7 @@ describe('AttachmentsSection', () => {
       const downloadButtons = screen.getAllByRole('button');
       expect(downloadButtons.length).toBe(mockAttachments.length);
       downloadButtons.forEach((button) => {
-        expect(button).toHaveTextContent(/download|↓/i);
+        expect(button).toHaveTextContent('⬇️');
       });
     });
   });
@@ -83,8 +83,9 @@ describe('AttachmentsSection', () => {
 
       // 🔴 ASSERT
       // Assuming formatFileSize returns values like "1 MB", "2 MB", "0.5 MB"
-      expect(screen.getByText(/1.*MB/i)).toBeInTheDocument();
-      expect(screen.getByText(/2.*MB/i)).toBeInTheDocument();
+      // There may be multiple elements with '1 MB' or '2.1 MB', so use getAllByText
+      expect(screen.getAllByText(/1.*MB/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/2.*MB/i).length).toBeGreaterThanOrEqual(1);
     });
 
     it('should handle small files with decimals', () => {

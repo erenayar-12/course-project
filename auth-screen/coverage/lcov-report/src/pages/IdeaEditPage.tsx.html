@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">11.76% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/68</span>
+                <span class='fraction'>8/68</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">11.94% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/67</span>
+                <span class='fraction'>8/67</span>
             </div>
         
             
@@ -328,13 +328,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -344,10 +344,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -554,7 +554,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * STORY-2.6: IdeaEditPage Component
  *
@@ -574,13 +574,13 @@
  * - AC10: 404 handling for non-existent ideas
  */
 &nbsp;
-<span class="cstat-no" title="statement not covered" >import React, { useEffect, useState } from 'react';</span>
-<span class="cstat-no" title="statement not covered" >import { useParams, useNavigate } from 'react-router-dom';</span>
-<span class="cstat-no" title="statement not covered" >import { useMockAuth0 } from '../context/MockAuth0Context';</span>
-<span class="cstat-no" title="statement not covered" >import IdeaForm, { IdeaFormData } from '../components/IdeaForm';</span>
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMockAuth0 } from '../context/MockAuth0Context';
+import IdeaForm, { IdeaFormData } from '../components/IdeaForm';
 import { IdeaResponse } from '../types/ideaSchema';
-<span class="cstat-no" title="statement not covered" >import { ideasService } from '../services/ideas.service';</span>
-<span class="cstat-no" title="statement not covered" >import { SkeletonLoader } from '../components/SkeletonLoader';</span>
+import { ideasService } from '../services/ideas.service';
+import { SkeletonLoader } from '../components/SkeletonLoader';
 &nbsp;
 type PageState = 'loading' | 'loaded' | 'error' | 'submitting';
 &nbsp;
@@ -590,7 +590,7 @@ interface PageError {
   status?: number;
 }
 &nbsp;
-const IdeaEditPage: React.FC = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
+const IdeaEditPage: React.FC = <span class="fstat-no" title="function not covered" >() =</span>&gt; {
   const { ideaId } = <span class="cstat-no" title="statement not covered" >useParams&lt;{ ideaId: string }&gt;();</span>
   const navigate = <span class="cstat-no" title="statement not covered" >useNavigate();</span>
   const { user, isLoading: authLoading } = <span class="cstat-no" title="statement not covered" >useMockAuth0();</span>
@@ -800,7 +800,7 @@ const IdeaEditPage: React.FC = <span class="cstat-no" title="statement not cover
 <span class="cstat-no" title="statement not covered" >  return null;</span>
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default IdeaEditPage;</span>
+export default IdeaEditPage;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -808,7 +808,7 @@ const IdeaEditPage: React.FC = <span class="cstat-no" title="statement not cover
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-26T07:51:59.688Z
+                at 2026-02-26T08:47:43.891Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

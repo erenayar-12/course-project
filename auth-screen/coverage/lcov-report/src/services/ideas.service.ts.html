@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">8.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/92</span>
+                <span class='fraction'>8/92</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">8.47% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/59</span>
+                <span class='fraction'>5/59</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">11.11% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>1/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">8.79% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/91</span>
+                <span class='fraction'>8/91</span>
             </div>
         
             
@@ -313,7 +313,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -323,8 +323,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,15 +335,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -547,8 +547,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * ideas.service.ts
  * Frontend service for idea submission and management.
@@ -556,7 +556,7 @@
  */
 &nbsp;
 import { IdeaSubmissionFormData, IdeaResponse, ErrorResponse } from '@/types/ideaSchema';
-<span class="cstat-no" title="statement not covered" >import { apiPost, apiGet, apiPut, apiDelete } from '@/api/client';</span>
+import { apiPost, apiGet, apiPut, apiDelete } from '@/api/client';
 &nbsp;
 class IdeasService {
   /**
@@ -565,9 +565,9 @@ class IdeasService {
    * @returns Promise&lt;IdeaResponse&gt; Created idea with ID and metadata
    * @throws Error with user-friendly message on failure
    */
-<span class="fstat-no" title="function not covered" >  async </span>submitIdea(data: IdeaSubmissionFormData): Promise&lt;IdeaResponse&gt; {
-<span class="cstat-no" title="statement not covered" >    try {</span>
-      const response = <span class="cstat-no" title="statement not covered" >await apiPost&lt;{ success: boolean; data: IdeaResponse }&gt;(</span>
+  async submitIdea(data: IdeaSubmissionFormData): Promise&lt;IdeaResponse&gt; {
+    try {
+      const response = await apiPost&lt;{ success: boolean; data: IdeaResponse }&gt;(
         '/ideas',
         data
       );
@@ -578,15 +578,15 @@ class IdeasService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      return response.data;</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (error instanceof Error &amp;&amp; error.message.includes('401')) {</span>
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (error instanceof Error &amp;&amp; error.message.includes('401')) {
 <span class="cstat-no" title="statement not covered" >        throw new Error('Session expired. Please log in again.');</span>
       }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (error instanceof Error &amp;&amp; error.message.includes('500')) {</span>
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (error instanceof Error &amp;&amp; error.message.includes('500')) {
 <span class="cstat-no" title="statement not covered" >        throw new Error('Server error. Please try again later.');</span>
       }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      throw error instanceof Error ? error : new Error('An unexpected error occurred');</span>
+      throw error instanceof Error ? error : <span class="branch-1 cbranch-no" title="branch not covered" >new Error('An unexpected error occurred');</span>
     }
   }
 &nbsp;
@@ -790,8 +790,8 @@ class IdeasService {
   }
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >ideasService = new IdeasService();</span>
-<span class="cstat-no" title="statement not covered" >export default ideasService;</span>
+export const ideasService = new IdeasService();
+export default ideasService;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -799,7 +799,7 @@ export const <span class="cstat-no" title="statement not covered" >ideasService 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-26T07:51:59.688Z
+                at 2026-02-26T08:47:43.891Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">53.84% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>7/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>4/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>6/12</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -123,29 +123,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -172,19 +172,19 @@
  * - VITE_AUTH0_CLIENT_ID: Auth0 application client ID
  */
 &nbsp;
-const AUTH0_DOMAIN = <span class="cstat-no" title="statement not covered" >process.env.VITE_AUTH0_DOMAIN || 'dev-placeholder.auth0.com';</span>
-const AUTH0_CLIENT_ID = <span class="cstat-no" title="statement not covered" >process.env.VITE_AUTH0_CLIENT_ID || 'placeholder_client_id_000000';</span>
+const AUTH0_DOMAIN = process.env.VITE_AUTH0_DOMAIN || 'dev-placeholder.auth0.com';
+const AUTH0_CLIENT_ID = process.env.VITE_AUTH0_CLIENT_ID || 'placeholder_client_id_000000';
 &nbsp;
 /**
  * Gets the Auth0 callback URL
  * Must match the Allowed Callback URLs in Auth0 application settings
  * Returns to dashboard after successful authentication
  */
-const getCallbackUrl = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(): string =</span>&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return `${window.location.origin}/dashboard`;</span>
+const getCallbackUrl = (): string =&gt; {
+  return `${window.location.origin}/dashboard`;
 };
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >AUTH0_CONFIG = {</span>
+export const AUTH0_CONFIG = {
   domain: AUTH0_DOMAIN,
   clientId: AUTH0_CLIENT_ID,
   redirectUri: getCallbackUrl(),
@@ -194,7 +194,7 @@ export const <span class="cstat-no" title="statement not covered" >AUTH0_CONFIG 
  * Validates that required Auth0 configuration is present
  * @throws Error if configuration is incomplete (only in production)
  */
-export const <span class="cstat-no" title="statement not covered" >validateAuth0Config = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): void =</span>&gt; {</span>
+export const validateAuth0Config = <span class="fstat-no" title="function not covered" >(): void =</span>&gt; {
   // Use process.env.NODE_ENV for Jest/Node compatibility (import.meta not supported in all Jest setups)
   const isDevelopment = <span class="cstat-no" title="statement not covered" >process.env.NODE_ENV !== 'production';</span>
 &nbsp;
@@ -217,7 +217,7 @@ export const <span class="cstat-no" title="statement not covered" >validateAuth0
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-26T07:51:59.688Z
+                at 2026-02-26T08:47:43.891Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

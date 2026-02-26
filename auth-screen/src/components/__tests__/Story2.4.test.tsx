@@ -68,7 +68,7 @@ describe('STORY-2.4: FilterDrawer Component', () => {
   describe('Filter and Sort Controls', () => {
     it('should render status filter control', () => {
       render(<FilterDrawer {...defaultProps} />);
-      expect(screen.getByText(/filter by status/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 4, name: /filter by status/i })).toBeInTheDocument();
     });
 
     it('should render sort dropdown control', () => {

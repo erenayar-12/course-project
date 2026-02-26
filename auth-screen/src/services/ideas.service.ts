@@ -237,6 +237,46 @@ class IdeasService {
       throw error instanceof Error ? error : new Error('Failed to fetch evaluation queue');
     }
   }
+
+  /**
+   * Updates idea status during evaluation (STORY-3.2 & STORY-3.3).
+   * Called when evaluator approves or rejects an idea.
+   * AC4: Auto-status update "Submitted" → "Under Review" on panel load
+   */
+  async updateIdeaStatus(ideaId: string, status: string): Promise<IdeaResponse> {
+    try {
+      const response = await apiPut<{ success: boolean; data: IdeaResponse }>(
+        `/ideas/${ideaId}/status`,
+        { status }
+      );
+
+      if (!response.success) {
+        throw new Error('Failed to update idea status');
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('403')) {
+          throw new Error("You don't have permission to update this idea");
+        }
+
+        if (error.message.includes('404')) {
+          throw new Error('Idea not found');
+        }
+
+        if (error.message.includes('401')) {
+          throw new Error('Session expired. Please log in again.');
+        }
+
+        if (error.message.includes('409')) {
+          throw new Error('Idea was already decided by another evaluator');
+        }
+      }
+
+      throw error instanceof Error ? error : new Error('Failed to update idea status');
+    }
+  }
 }
 
 export const ideasService = new IdeasService();
