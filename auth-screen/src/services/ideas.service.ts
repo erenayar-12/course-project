@@ -4,27 +4,10 @@
  * Handles: API communication, error handling, data transformation.
  */
 
-import axios, { AxiosError } from 'axios';
 import { IdeaSubmissionFormData, IdeaResponse, ErrorResponse } from '@/types/ideaSchema';
-
-// Get API URL from environment or use fallback
-const API_URL = (() => {
-  if (typeof window !== 'undefined') {
-    // Browser environment
-    return 'http://localhost:3001/api';
-  }
-  // Server/test environment
-  return 'http://localhost:3001/api';
-})();
+import { apiPost, apiGet, apiPut, apiDelete } from '@/api/client';
 
 class IdeasService {
-  private api = axios.create({
-    baseURL: API_URL,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
   /**
    * Submits a new idea to the backend.
    * @param data - Form data validated by Zod schema
@@ -33,54 +16,23 @@ class IdeasService {
    */
   async submitIdea(data: IdeaSubmissionFormData): Promise<IdeaResponse> {
     try {
-      // Get JWT token from localStorage (set by Auth0 from EPIC-1)
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
-
-      // Make API request with JWT in Authorization header
-      const response = await this.api.post<{ success: boolean; data: IdeaResponse }>(
+      const response = await apiPost<{ success: boolean; data: IdeaResponse }>(
         '/ideas',
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        data
       );
 
-      if (!response.data.success) {
+      if (!response.success) {
         throw new Error('Failed to submit idea');
       }
 
-      return response.data.data;
+      return response.data;
     } catch (error) {
-      // Handle different error scenarios
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ErrorResponse>;
+      if (error instanceof Error && error.message.includes('401')) {
+        throw new Error('Session expired. Please log in again.');
+      }
 
-        if (axiosError.response?.status === 400) {
-          // Validation error - includes field details
-          const errorData = axiosError.response.data;
-          throw new Error(errorData.error || 'Validation failed');
-        }
-
-        if (axiosError.response?.status === 401) {
-          throw new Error('Session expired. Please log in again.');
-        }
-
-        if (axiosError.response?.status === 500) {
-          throw new Error('Server error. Please try again later.');
-        }
-
-        if (axiosError.code === 'ECONNABORTED') {
-          throw new Error('Request timeout. Please try again.');
-        }
-
-        if (!axiosError.response) {
-          throw new Error('Network error. Please check your connection.');
-        }
+      if (error instanceof Error && error.message.includes('500')) {
+        throw new Error('Server error. Please try again later.');
       }
 
       throw error instanceof Error ? error : new Error('An unexpected error occurred');
@@ -92,52 +44,33 @@ class IdeasService {
    * Used by STORY-2.3 (Dashboard).
    */
   async getIdeas(params?: { page?: number; limit?: number; status?: string; sortBy?: string }) {
-    const token = localStorage.getItem('auth_token');
-    if (!token) throw new Error('Authentication required');
-
-    return this.api.get('/ideas', {
-      params,
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    return apiGet<{ ideas: any[] }>('/ideas', { params });
   }
 
   /**
    * Fetches detailed information about a specific idea.
    * Implements AC1 from STORY-2.5: Page loads with idea information
-   * 
-   * @param ideaId - The ID of the idea to fetch
-   * @returns Promise<IdeaDetail> Detailed idea information including attachments and feedback
-   * @throws Error on 403 (unauthorized), 404 (not found), or other failures
    */
   async getIdeaDetail(ideaId: string): Promise<IdeaResponse> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
+      const response = await apiGet<{ success: boolean; data: IdeaResponse }>(`/ideas/${ideaId}`);
 
-      const response = await this.api.get(`/ideas/${ideaId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.data.success) {
+      if (!response.success) {
         throw new Error('Failed to fetch idea details');
       }
 
-      return response.data.data;
+      return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-
-        if (axiosError.response?.status === 403) {
+      if (error instanceof Error) {
+        if (error.message.includes('403')) {
           throw new Error("You don't have permission to view this idea");
         }
 
-        if (axiosError.response?.status === 404) {
+        if (error.message.includes('404')) {
           throw new Error('Idea not found');
         }
 
-        if (axiosError.response?.status === 401) {
+        if (error.message.includes('401')) {
           throw new Error('Session expired. Please log in again.');
         }
       }
@@ -149,37 +82,25 @@ class IdeasService {
   /**
    * Deletes an idea (soft delete).
    * Implements AC5 from STORY-2.5: Delete button with confirmation
-   * 
-   * @param ideaId - The ID of the idea to delete
-   * @throws Error on 403 (unauthorized), 404 (not found), or other failures
    */
   async deleteIdea(ideaId: string): Promise<void> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
+      const response = await apiDelete<{ success: boolean }>(`/ideas/${ideaId}`);
 
-      const response = await this.api.delete(`/ideas/${ideaId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.data.success) {
+      if (!response.success) {
         throw new Error('Failed to delete idea');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-
-        if (axiosError.response?.status === 403) {
+      if (error instanceof Error) {
+        if (error.message.includes('403')) {
           throw new Error("You don't have permission to delete this idea");
         }
 
-        if (axiosError.response?.status === 404) {
+        if (error.message.includes('404')) {
           throw new Error('Idea not found');
         }
 
-        if (axiosError.response?.status === 401) {
+        if (error.message.includes('401')) {
           throw new Error('Session expired. Please log in again.');
         }
       }
@@ -190,54 +111,41 @@ class IdeasService {
 
   /**
    * Updates an existing idea (STORY-2.6).
-   * 
-   * @param ideaId - The ID of the idea to update
-   * @param data - Updated idea data (title, description, category)
-   * @returns Promise<IdeaResponse> Updated idea with new data
-   * @throws Error on 400 (validation), 403 (unauthorized), 404 (not found), or other failures
    */
-  async updateIdea(ideaId: string, data: { title: string; description: string; category: string }): Promise<IdeaResponse> {
+  async updateIdea(
+    ideaId: string,
+    data: { title: string; description: string; category: string }
+  ): Promise<IdeaResponse> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
-
-      const response = await this.api.put<{ success: boolean; data: IdeaResponse }>(
+      const response = await apiPut<{ success: boolean; data: IdeaResponse }>(
         `/ideas/${ideaId}`,
-        data,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        data
       );
 
-      if (!response.data.success) {
+      if (!response.success) {
         throw new Error('Failed to update idea');
       }
 
-      return response.data.data;
+      return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<any>;
-
-        if (axiosError.response?.status === 400) {
-          const errorData = axiosError.response.data;
-          throw new Error(errorData?.message || 'Validation failed');
+      if (error instanceof Error) {
+        if (error.message.includes('400')) {
+          throw new Error(error.message || 'Validation failed');
         }
 
-        if (axiosError.response?.status === 403) {
+        if (error.message.includes('403')) {
           throw new Error("You don't have permission to edit this idea");
         }
 
-        if (axiosError.response?.status === 404) {
+        if (error.message.includes('404')) {
           throw new Error('Idea not found');
         }
 
-        if (axiosError.response?.status === 401) {
+        if (error.message.includes('401')) {
           throw new Error('Session expired. Please log in again.');
         }
 
-        if (axiosError.response?.status === 500) {
+        if (error.message.includes('500')) {
           throw new Error('Server error. Please try again later.');
         }
       }
@@ -249,65 +157,124 @@ class IdeasService {
   /**
    * Uploads attachment files for an idea (STORY-2.6).
    * Uses FormData for multipart file upload.
-   * 
-   * @param ideaId - The ID of the idea to attach files to
-   * @param files - Array of files to upload
-   * @throws Error on 401 (unauthorized), 404 (not found), or upload failures
    */
   async uploadAttachments(ideaId: string, files: File[]): Promise<void> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
-
       // Create FormData for multipart upload
       const formData = new FormData();
       files.forEach((file) => {
         formData.append('files', file);
       });
 
-      const response = await this.api.post(
-        `/ideas/${ideaId}/upload`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      // Get token and make direct fetch request (FormData shouldn't be stringified)
+      const token = localStorage.getItem('auth_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-      if (!response.data.success) {
+      const response = await fetch(`http://localhost:3001/api/ideas/${ideaId}/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(error.message || `Upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
         throw new Error('Failed to upload attachment files');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<any>;
-
-        if (axiosError.response?.status === 403) {
-          throw new Error("You don't have permission to upload files for this idea");
-        }
-
-        if (axiosError.response?.status === 404) {
-          throw new Error('Idea not found');
-        }
-
-        if (axiosError.response?.status === 401) {
-          throw new Error('Session expired. Please log in again.');
-        }
-
-        if (axiosError.response?.status === 413) {
+      if (error instanceof Error) {
+        if (error.message.includes('413')) {
           throw new Error('File size too large. Maximum 10MB per file.');
         }
 
-        if (axiosError.response?.status === 400) {
-          const errorData = axiosError.response.data;
-          throw new Error(errorData?.message || 'Invalid file type or upload error');
+        if (error.message.includes('400')) {
+          throw new Error(error.message || 'Invalid file type or upload error');
+        }
+
+        if (error.message.includes('403')) {
+          throw new Error("You don't have permission to upload files for this idea");
+        }
+
+        if (error.message.includes('404')) {
+          throw new Error('Idea not found');
+        }
+
+        if (error.message.includes('401')) {
+          throw new Error('Session expired. Please log in again.');
         }
       }
 
       throw error instanceof Error ? error : new Error('Failed to upload attachment files');
+    }
+  }
+
+  /**
+   * Fetches evaluation queue for current evaluator (STORY-3.1).
+   * Returns ideas pending review sorted by submission date (FIFO).
+   */
+  async getEvaluationQueue(page: number = 1, limit: number = 25) {
+    try {
+      const response = await apiGet('/evaluation-queue', {
+        params: { page, limit },
+      });
+      return response;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('401')) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      if (error instanceof Error && error.message.includes('403')) {
+        throw new Error('You do not have permission to view the evaluation queue.');
+      }
+
+      throw error instanceof Error ? error : new Error('Failed to fetch evaluation queue');
+    }
+  }
+
+  /**
+   * Updates idea status during evaluation (STORY-3.2 & STORY-3.3).
+   * Called when evaluator approves or rejects an idea.
+   * AC4: Auto-status update "Submitted" → "Under Review" on panel load
+   */
+  async updateIdeaStatus(ideaId: string, status: string): Promise<IdeaResponse> {
+    try {
+      const response = await apiPut<{ success: boolean; data: IdeaResponse }>(
+        `/ideas/${ideaId}/status`,
+        { status }
+      );
+
+      if (!response.success) {
+        throw new Error('Failed to update idea status');
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('403')) {
+          throw new Error("You don't have permission to update this idea");
+        }
+
+        if (error.message.includes('404')) {
+          throw new Error('Idea not found');
+        }
+
+        if (error.message.includes('401')) {
+          throw new Error('Session expired. Please log in again.');
+        }
+
+        if (error.message.includes('409')) {
+          throw new Error('Idea was already decided by another evaluator');
+        }
+      }
+
+      throw error instanceof Error ? error : new Error('Failed to update idea status');
     }
   }
 }

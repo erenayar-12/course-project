@@ -28,7 +28,8 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [status, setStatus] = useState(EvaluationStatus.ACCEPTED);
+  // Use lowercase values for backend compatibility
+  const [status, setStatus] = useState<'accepted' | 'rejected' | 'needs_revision'>('accepted');
   const [comments, setComments] = useState('');
   const [fileUrl, setFileUrl] = useState<string>();
   const [error, setError] = useState<string>();
@@ -89,12 +90,12 @@ const EvaluationModal: React.FC<EvaluationModalProps> = ({
             </label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value as EvaluationStatus)}
+              onChange={(e) => setStatus(e.target.value as 'accepted' | 'rejected' | 'needs_revision')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="ACCEPTED">✓ Accepted</option>
-              <option value="REJECTED">✗ Rejected</option>
-              <option value="NEEDS_REVISION">⚠️ Needs Revision</option>
+              <option value="accepted">✓ Accepted</option>
+              <option value="rejected">✗ Rejected</option>
+              <option value="needs_revision">⚠️ Needs Revision</option>
             </select>
           </div>
 

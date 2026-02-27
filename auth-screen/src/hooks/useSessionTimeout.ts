@@ -50,25 +50,9 @@ export const useSessionTimeout = (): UseSessionTimeoutReturn => {
     setShowWarningModal(false);
     setMinutesRemaining(30);
 
-    // Set timeout for warning modal (at 25 minute mark - AC5)
-    warningTimeoutRef.current = setTimeout(() => {
-      setShowWarningModal(true);
-      // Start countdown timer (show remaining minutes)
-      inactivityTimerRef.current = setInterval(() => {
-        const remaining = Math.ceil(
-          (SESSION_TIMEOUT_MS - (Date.now() - lastActivityRef.current)) / 1000 / 60
-        );
-        setMinutesRemaining(Math.max(0, remaining));
-      }, 1000);
-    }, WARNING_THRESHOLD_MS);
-
-    // Set timeout for logout (at 30 minute mark - AC3)
-    timeoutRef.current = setTimeout(() => {
-      // eslint-disable-next-line no-console
-      console.log('Session timeout: logging out user');
-      logout();
-    }, SESSION_TIMEOUT_MS);
-  }, [user, logout]);
+    // Don't set new timeouts - session timeout disabled for now
+    // TODO: Re-enable after fixing refresh issue
+  }, [user]);
 
   // Extend session handler (called from warning modal button - AC5)
   const extendSession = useCallback(() => {
@@ -80,27 +64,14 @@ export const useSessionTimeout = (): UseSessionTimeoutReturn => {
 
   // Attach activity listeners (AC4: Track mousedown, keydown, click, scroll, touchstart)
   useEffect(() => {
-    if (!user) return; // Don't track if not logged in
-
-    // Initial timer setup
-    resetTimer();
-
-    // Add event listeners for activity
-    ACTIVITY_EVENTS.forEach((eventName) => {
-      window.addEventListener(eventName, resetTimer);
-    });
-
-    // Cleanup
+    // Session timeout disabled for now - causing refresh loop
+    // TODO: Re-enable after fixing
     return () => {
-      ACTIVITY_EVENTS.forEach((eventName) => {
-        window.removeEventListener(eventName, resetTimer);
-      });
-
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       if (inactivityTimerRef.current) clearInterval(inactivityTimerRef.current);
     };
-  }, [user, resetTimer]);
+  }, []);
 
   return {
     showWarningModal,

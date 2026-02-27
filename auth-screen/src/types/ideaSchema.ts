@@ -69,3 +69,28 @@ export interface ErrorResponse {
   error: string;
   details?: Array<{ field: string; message: string }>;
 }
+
+/**
+ * STORY-3.1: Evaluation Queue types
+ * Used for displaying ideas pending evaluation in queue view
+ */
+export interface QueueIdea {
+  id: string;
+  title: string;
+  submitterName: string;
+  category: string;
+  createdAt: string;
+  status: 'Submitted' | 'Under Review';
+  daysInQueue: number;
+}
+
+export interface EvaluationQueueResponse {
+  success: boolean;
+  data: QueueIdea[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}

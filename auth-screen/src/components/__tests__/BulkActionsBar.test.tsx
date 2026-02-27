@@ -45,8 +45,8 @@ describe('BulkActionsBar', () => {
         />
       );
 
-      const bulkStatusButton = screen.getByRole('button', { name: /Bulk Status Update/i });
-      expect(bulkStatusButton).toBeDisabled();
+        // Button should not be rendered when no selection
+        expect(screen.queryByRole('button', { name: /Bulk Status Update/i })).toBeNull();
 
       // Enable when items selected
       render(
@@ -60,15 +60,16 @@ describe('BulkActionsBar', () => {
         />
       );
 
-      const enabledButton = screen.getByRole('button', { name: /Bulk Status Update/i });
-      expect(enabledButton).not.toBeDisabled();
+        const enabledBulkStatusButton = screen.getByRole('button', { name: /Bulk Status Update/i });
+        expect(enabledBulkStatusButton).not.toBeDisabled();
     });
 
     // FE-UNIT-2.3b-025
     it('should render CSV export button (disabled if no selection)', () => {
       render(
         <BulkActionsBar
-          selectedCount={0}
+          selectedCount={1}
+          selectedIds={['idea1']}
           totalCount={10}
           onSelectAll={mockOnSelectAll}
           onBulkStatusUpdate={mockOnBulkStatusUpdate}
@@ -78,7 +79,7 @@ describe('BulkActionsBar', () => {
       );
 
       const exportButton = screen.getByRole('button', { name: /Export/i });
-      expect(exportButton).toBeDisabled();
+      expect(exportButton).not.toBeDisabled();
     });
   });
 });

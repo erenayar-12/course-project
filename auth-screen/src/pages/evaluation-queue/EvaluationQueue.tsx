@@ -6,11 +6,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Idea, IdeaStatus, EvaluationStatus, EvaluationQueueResponse } from '../../types/evaluationTypes';
 import EvaluationQueueRow from '../../components/EvaluationQueueRow';
 import EvaluationModal from '../../components/EvaluationModal';
 import BulkActionsBar from '../../components/BulkActionsBar';
+import { apiGet, apiPost } from '../../api/client';
 
 type FilterStatus = 'all' | IdeaStatus;
 
@@ -42,22 +42,23 @@ const EvaluationQueue: React.FC = () => {
   const limit = 10;
 
   // Fetch evaluation queue
+  // Fetch evaluation queue
   const fetchQueue = async (pageNum: number = 1) => {
     try {
       setIsLoading(true);
       setError(undefined);
 
       const offset = (pageNum - 1) * limit;
-      const response = await axios.get<EvaluationQueueResponse>('/api/evaluation-queue', {
+      const response = await apiGet<EvaluationQueueResponse>('/evaluation-queue', {
         params: {
           limit,
           offset,
-          status: statusFilter === 'all' ? undefined : statusFilter,
+          ...(statusFilter !== 'all' && { status: statusFilter }),
         },
       });
 
-      setIdeas(response.data.ideas);
-      setTotalPages(response.data.pagination.pages);
+      setIdeas(response.ideas);
+      setTotalPages(response.pagination.pages);
       setPage(pageNum);
     } catch (err) {
       setError('Failed to load evaluation queue');
@@ -80,7 +81,7 @@ const EvaluationQueue: React.FC = () => {
 
   // Handle modal submission
   const handleEvaluationSubmit = async (
-    status: EvaluationStatus,
+    status: 'accepted' | 'rejected' | 'needs_revision',
     comments: string,
     fileUrl?: string
   ) => {
@@ -89,7 +90,7 @@ const EvaluationQueue: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      await axios.post(`/api/ideas/${selectedIdea.id}/evaluate`, {
+      await apiPost(`/ideas/${selectedIdea.id}/evaluate`, {
         status,
         comments,
         fileUrl,

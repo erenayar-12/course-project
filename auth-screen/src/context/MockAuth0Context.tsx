@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { ROLES, UserRole } from '../constants/roles';
 
 interface UserData {
@@ -21,9 +21,26 @@ interface MockAuth0ContextType {
   error: null | { message: string };
   user: UserData | null;
   logout: () => void;
+  getToken: () => string | null;
 }
 
 const MockAuth0Context = createContext<MockAuth0ContextType | undefined>(undefined);
+
+// Generate a mock JWT token (for testing - not cryptographically secure)
+const generateMockToken = (email: string, role: UserRole): string => {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      sub: email, // Auth0 compatible subject claim
+      email,
+      role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 86400, // 24 hours
+    })
+  );
+  const signature = btoa('mock-signature');
+  return `${header}.${payload}.${signature}`;
+};
 
 export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +50,7 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Load user from localStorage on mount (AC1 - Role persists)
   useEffect(() => {
     const storedUser = localStorage.getItem('mock_user');
+    const storedToken = localStorage.getItem('auth_token');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -43,7 +61,7 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  const loginWithRedirect = async (options?: LoginOptions) => {
+  const loginWithRedirect = useCallback(async (options?: LoginOptions) => {
     setIsLoading(true);
     setError(null);
 
@@ -59,7 +77,12 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
       let role: UserRole = ROLES.SUBMITTER;
       const email = options?.authorizationParams?.login_hint || 'user@example.com';
 
-      if (email.includes('evaluator') || email.includes('eval')) {
+      // Dummy credentials for testing
+      if (email === 'admin@admin.com') {
+        role = ROLES.ADMIN;
+      } else if (email === 'user@user.com') {
+        role = ROLES.SUBMITTER;
+      } else if (email.includes('evaluator') || email.includes('eval')) {
         role = ROLES.EVALUATOR;
       } else if (email.includes('admin')) {
         role = ROLES.ADMIN;
@@ -73,7 +96,10 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
         timestamp: new Date().toISOString(),
       };
 
+      // Generate and store mock token
+      const token = generateMockToken(email, role);
       localStorage.setItem('mock_user', JSON.stringify(userData));
+      localStorage.setItem('auth_token', token);
       setUser(userData);
 
       // Show success message with role
@@ -86,9 +112,9 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     // AC2: Logout clears all auth data
     localStorage.removeItem('mock_user');
     localStorage.removeItem('auth_user');
@@ -102,10 +128,20 @@ export const MockAuth0Provider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // Redirect to login page (AC1: User is redirected to login)
     window.location.href = '/login?logout=true';
-  };
+  }, []);
+
+  const getToken = useCallback((): string | null => {
+    return localStorage.getItem('auth_token');
+  }, []);
+
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(
+    () => ({ loginWithRedirect, isLoading, error, user, logout, getToken }),
+    [loginWithRedirect, isLoading, error, user, logout, getToken]
+  );
 
   return (
-    <MockAuth0Context.Provider value={{ loginWithRedirect, isLoading, error, user, logout }}>
+    <MockAuth0Context.Provider value={contextValue}>
       {children}
     </MockAuth0Context.Provider>
   );

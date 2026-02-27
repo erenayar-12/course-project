@@ -10,11 +10,11 @@ import { MemoryRouter } from 'react-router-dom';
 import EvaluationQueueRow from '../EvaluationQueueRow';
 import { IdeaStatus } from '../../types/evaluationTypes';
 
-jest.mock('../StatusBadge', () => {
-  return function MockStatusBadge({ status }: { status: string }) {
+jest.mock('../StatusBadge', () => ({
+  StatusBadge: function MockStatusBadge({ status }: { status: string }) {
     return <span data-testid="status-badge">{status}</span>;
-  };
-});
+  },
+}));
 
 describe('EvaluationQueueRow', () => {
   const mockIdea = {

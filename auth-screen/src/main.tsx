@@ -1,33 +1,20 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import App from './App';
 import './index.css';
+// import { Auth0Provider } from '@auth0/auth0-react';
 
-// eslint-disable-next-line no-console
-console.log('Main.tsx loading...');
+// MSW disabled: All API requests go to real backend in development.
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  // eslint-disable-next-line no-console
-  console.error('Root element not found!');
   throw new Error('Root element not found');
 }
 
-// eslint-disable-next-line no-console
-console.log('Root element found, rendering app...');
-
-try {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <Router>
-        <App />
-      </Router>
-    </React.StrictMode>
-  );
-  // eslint-disable-next-line no-console
-  console.log('App rendered successfully');
-} catch (error) {
-  // eslint-disable-next-line no-console
-  console.error('Error rendering app:', error);
-}
+ReactDOM.createRoot(rootElement).render(
+  <Router>
+    <App />
+  </Router>
+);

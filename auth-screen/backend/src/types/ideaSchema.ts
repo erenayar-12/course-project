@@ -10,7 +10,8 @@ export const ideasSchema = z.object({
     .min(10, 'Description must be at least 10 characters')
     .max(5000, 'Description must not exceed 5000 characters'),
   category: z.enum(['PRODUCT', 'PROCESS', 'MARKETING', 'OTHER']),
-});
+  submitterEmail: z.string().email('Must be a valid email'),
+}).passthrough();
 
 export const updateIdeaSchema = ideasSchema.partial();
 

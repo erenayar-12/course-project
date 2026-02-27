@@ -9,8 +9,36 @@ import { evaluationService } from '../services/evaluation.service.js';
 import { ideasSchema, updateIdeaSchema, paginationSchema, fileUploadSchema } from '../types/ideaSchema.js';
 import { AppError } from '../middleware/errorHandler.js';
 import fs from 'fs';
+import { addComment, getCommentsForIdea } from '../services/comment.service.js';
 
 const router = Router();
+
+// POST /api/ideas/:id/comments - Add a comment to an idea
+router.post('/:id/comments', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const authorId = req.user?.sub || 'unknown';
+    if (!text || text.length === 0) {
+      return res.status(400).json({ success: false, message: 'Comment text required' });
+    }
+    const comment = await addComment(id, authorId, text);
+    res.status(201).json({ success: true, data: comment });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to add comment' });
+  }
+});
+
+// GET /api/ideas/:id/comments - Get all comments for an idea
+router.get('/:id/comments', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const comments = await getCommentsForIdea(id);
+    res.status(200).json({ success: true, data: comments });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to fetch comments' });
+  }
+});
 
 // Configure multer for file uploads
 const uploadDir = process.env.UPLOAD_DIR || './uploads/ideas';
@@ -60,9 +88,14 @@ const upload = multer({
 
 // POST /api/ideas - Create a new idea
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+    console.log('REQ BODY:', req.body);
   try {
     const validated = ideasSchema.parse(req.body);
-    const idea = await ideasService.createIdea(req.externalId!, validated);
+    // Pass submitterEmail explicitly to createIdea
+    const idea = await ideasService.createIdea(req.externalId!, {
+      ...validated,
+      submitterEmail: req.body.submitterEmail,
+    });
 
     res.status(201).json({
       success: true,
@@ -88,19 +121,34 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
 // GET /api/ideas - List user's ideas
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+      console.log('API /ideas route hit');
+    console.log('API /ideas req.user:', req.user);
   try {
     const validated = paginationSchema.parse(req.query);
-    const result = await ideasService.getUserIdeas(req.externalId!, validated);
-
-    res.status(200).json({
-      success: true,
-      data: result.ideas,
-      pagination: {
-        total: result.total,
-        page: result.page,
-        pageSize: result.pageSize,
-      },
-    });
+    // If admin/evaluator, show all ideas
+    if (req.user && ['admin', 'evaluator'].includes(req.user.role)) {
+      const result = await ideasService.getAllIdeas(validated);
+      res.status(200).json({
+        success: true,
+        data: result.ideas,
+        pagination: {
+          total: result.total,
+          page: result.page,
+          pageSize: result.pageSize,
+        },
+      });
+    } else {
+      const result = await ideasService.getUserIdeas(req.externalId!, validated);
+      res.status(200).json({
+        success: true,
+        data: result.ideas,
+        pagination: {
+          total: result.total,
+          page: result.page,
+          pageSize: result.pageSize,
+        },
+      });
+    }
   } catch (error) {
     const err = error as any;
     res.status(500).json({
@@ -115,7 +163,8 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const idea = await ideasService.getIdeaById(
       req.params.id,
-      req.externalId!
+      req.externalId!,
+      req.user // pass user for role check
     );
 
     res.status(200).json({
@@ -284,7 +333,7 @@ router.post(
     try {
       const { id } = req.params;
       const { status, comments, fileUrl } = req.body;
-      const externalId = req.user?.sub || 'unknown';
+      const evaluatorId = req.user?.id || 'unknown';
 
       if (!status || !comments) {
         return res.status(400).json({
@@ -301,9 +350,16 @@ router.post(
         });
       }
 
-      const evaluation = await evaluationService.submitEvaluation(id, externalId, {
+      // Map lowercase status to uppercase for DB
+      const statusMap = {
+        accepted: 'ACCEPTED',
+        rejected: 'REJECTED',
+        needs_revision: 'NEEDS_REVISION',
+      };
+      const dbStatus = statusMap[status] || status;
+      const evaluation = await evaluationService.submitEvaluation(id, evaluatorId, {
         ideaId: id,
-        status,
+        status: dbStatus,
         comments,
         fileUrl,
       });
@@ -314,10 +370,12 @@ router.post(
         data: evaluation,
       });
     } catch (err: any) {
-      const statusCode = err.message.includes('not found') ? 404 : 500;
+      console.error('POST /api/ideas/:id/evaluate error:', err);
+      const statusCode = err.message && err.message.includes('not found') ? 404 : 500;
       res.status(statusCode).json({
         success: false,
         message: err.message || 'Failed to submit evaluation',
+        error: err,
       });
     }
   }
@@ -343,6 +401,53 @@ router.get(
       res.status(statusCode).json({
         success: false,
         message: err.message || 'Failed to retrieve evaluation history',
+      });
+    }
+  }
+);
+
+/**
+ * STORY-3.1: Get evaluation queue with pagination
+ * GET /api/evaluation-queue?page=1&limit=25
+ * Returns all ideas with status "Submitted" or "Under Review"
+ * Sorted by createdAt ascending (oldest first - FIFO)
+ */
+router.get(
+  '/evaluation-queue',
+  authMiddleware,
+  roleCheck(['evaluator', 'admin']),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+
+      // Validate pagination params
+      if (page < 1 || limit < 1 || limit > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid pagination parameters. Page must be >= 1, limit between 1-100.',
+        });
+      }
+
+      const offset = (page - 1) * limit;
+
+      const result = await ideasService.getEvaluationQueue(limit, offset);
+      console.log('EVALUATION QUEUE IDEAS:', result.data);
+      res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: {
+          page,
+          limit,
+          total: result.pagination.total,
+          totalPages: Math.ceil(result.pagination.total / limit),
+        },
+      });
+    } catch (err: any) {
+      console.error('Evaluation queue error:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch evaluation queue',
       });
     }
   }

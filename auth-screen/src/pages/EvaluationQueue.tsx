@@ -1,289 +1,241 @@
 /**
- * STORY-2.3b: EvaluationQueue Page Component
+ * STORY-3.1: EvaluationQueue Page Component (Updated)
  * 
- * Main page for evaluator queue - shows all submitted ideas pending evaluation
- * AC 12-16: Evaluation queue with filters, bulk operations, and status updates
+ * Main page for evaluator queue - shows all submitted ideas pending evaluation.
+ * This is a simplified, efficient view focused on:
+ * - Quick table display of pending ideas
+ * - Pagination for handling large queues
+ * - Click-to-evaluate workflow
  */
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Idea, IdeaStatus, EvaluationStatus, EvaluationQueueResponse } from '../types/evaluationTypes';
-import EvaluationQueueRow from '../components/EvaluationQueueRow';
+import React, { useEffect, useState } from 'react';
+import { auth } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import { apiGet } from '../api/client';
+import { QueueTable } from '../components/QueueTable';
+import { QueuePagination } from '../components/QueuePagination';
 import EvaluationModal from '../components/EvaluationModal';
-import BulkActionsBar from '../components/BulkActionsBar';
+import { QueueIdea, EvaluationQueueResponse } from '../types/ideaSchema';
+import { ROLES } from '../constants/roles';
 
-type FilterStatus = 'all' | IdeaStatus;
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  total: number;
+}
 
 /**
  * EvaluationQueue Page
- * Displays evaluator queue with filtering, selection, and bulk operations
- * Supports AC12-16: Queue view, filters, bulk operations, audit trail
+ * Displays a simplified evaluator queue focused on quick idea browsing and evaluation
+ * Features: Pagination with localStorage persistence, error recovery, scroll restoration
  */
 const EvaluationQueue: React.FC = () => {
-  // Queue data
-  const [ideas, setIdeas] = useState<Idea[]>([]);
+    // Modal state
+    const [selectedIdea, setSelectedIdea] = useState<QueueIdea | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
+  const [ideas, setIdeas] = useState<QueueIdea[]>([]);
+  const [pagination, setPagination] = useState<PaginationState>({ page: 1, pageSize: 25, total: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | null>(null);
 
-  // Filtering
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  // Firebase Auth state
+  const [authLoading, setAuthLoading] = useState(true);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  // Selection
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // ...existing code...
+  // Authentication check (not inside any hook or conditional)
+  let authContent = null;
+  if (authLoading) {
+    authContent = <div>Loading...</div>;
+  } else if (!firebaseUser) {
+    window.location.href = '/login';
+    authContent = null;
+  }
 
-  // Modal
-  const [selectedIdea, setSelectedIdea] = useState<Idea>();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Load pagination state from localStorage
+  useEffect(() => {
+    const savedPageSize = localStorage.getItem('evaluationQueue_pageSize');
+    if (savedPageSize) {
+      setPagination(prev => ({ ...prev, pageSize: parseInt(savedPageSize) }));
+    }
+  }, []);
 
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const limit = 10;
+  // Restore scroll position from sessionStorage
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('evaluationQueue_scrollPos');
+    if (savedScroll) {
+      window.scrollTo(0, parseInt(savedScroll));
+      sessionStorage.removeItem('evaluationQueue_scrollPos');
+    }
+  }, []);
 
   // Fetch evaluation queue
-  const fetchQueue = async (pageNum: number = 1) => {
-    try {
-      setIsLoading(true);
-      setError(undefined);
+  const fetchQueue = async (page: number, pageSize: number) => {
+    setIsLoading(true);
+    setError(null);
 
-      const offset = (pageNum - 1) * limit;
-      const response = await axios.get<EvaluationQueueResponse>('/api/evaluation-queue', {
-        params: {
-          limit,
-          offset,
-          status: statusFilter === 'all' ? undefined : statusFilter,
-        },
+    try {
+      // Ensure pageSize is always a valid number
+      const validPageSize = typeof pageSize === 'number' && !isNaN(pageSize) ? pageSize : 25;
+      const result = await apiGet<EvaluationQueueResponse>('/ideas', {
+        params: { page, limit: validPageSize },
+        headers: { Authorization: firebaseUser ? `Bearer ${firebaseUser.accessToken || ''}` : '' },
       });
 
-      setIdeas(response.data.ideas);
-      setTotalPages(response.data.pagination.pages);
-      setPage(pageNum);
-    } catch (err) {
-      setError('Failed to load evaluation queue');
-      // eslint-disable-next-line no-console
-      console.error('Error fetching queue:', err);
+      if (result.success && result.data) {
+        console.log('EvaluationQueue fetched ideas:', result.data);
+        // Show only open statuses in queue
+        const queueIdeas = (result.data || []).filter(
+          (idea) => ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'].includes(idea.status)
+        );
+        setIdeas(queueIdeas);
+        setPagination({
+          page: result.pagination.page,
+          pageSize: result.pagination.limit,
+          total: result.pagination.total,
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch evaluation queue:', err);
+      setError(err.message || 'Failed to fetch evaluation queue. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Initial fetch
   useEffect(() => {
-    fetchQueue(1);
-  }, [statusFilter]);
-
-  // Filter displayed ideas
-  const filteredIdeas = 
-    statusFilter === 'all'
-      ? ideas
-      : ideas.filter(idea => idea.status === statusFilter);
-
-  // Handle modal submission
-  const handleEvaluationSubmit = async (
-    status: EvaluationStatus,
-    comments: string,
-    fileUrl?: string
-  ) => {
-    if (!selectedIdea) return;
-
-    try {
-      setIsSubmitting(true);
-
-      await axios.post(`/api/ideas/${selectedIdea.id}/evaluate`, {
-        status,
-        comments,
-        fileUrl,
-      });
-
-      // Refresh queue
-      await fetchQueue(page);
-      setIsModalOpen(false);
-      setSelectedIdea(undefined);
-    } catch (err) {
-      const message = (err as unknown as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to submit evaluation';
-      throw new Error(message);
-    } finally {
-      setIsSubmitting(false);
+    if (firebaseUser) {
+      fetchQueue(pagination.page, pagination.pageSize);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUser]);
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    // Save scroll position for restoration after navigation
+    sessionStorage.setItem('evaluationQueue_scrollPos', String(window.scrollY));
+    const pageSize = typeof pagination.pageSize === 'number' && !isNaN(pagination.pageSize) ? pagination.pageSize : 25;
+    setPagination(prev => ({ ...prev, page: newPage, pageSize }));
+    fetchQueue(newPage, pageSize);
   };
 
-  // Toggle idea selection
-  const toggleSelection = (ideaId: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(ideaId)) {
-      newSelected.delete(ideaId);
-    } else {
-      newSelected.add(ideaId);
-    }
-    setSelectedIds(newSelected);
+  // Handle page size change
+  const handlePageSizeChange = (newPageSize: number) => {
+    const pageSize = typeof newPageSize === 'number' && !isNaN(newPageSize) ? newPageSize : 25;
+    setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+    fetchQueue(1, pageSize);
   };
 
-  // Select all on current page
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allIds = new Set(filteredIdeas.map(i => i.id));
-      setSelectedIds(allIds);
-    } else {
-      setSelectedIds(new Set());
-    }
+  // Handle retry on error
+  const handleRetry = () => {
+    const pageSize = typeof pagination.pageSize === 'number' && !isNaN(pagination.pageSize) ? pagination.pageSize : 25;
+    fetchQueue(pagination.page, pageSize);
   };
+
+  if (authContent !== null) {
+    return authContent;
+  }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Pending Ideas</h1>
-        <p className="text-gray-600 mt-1">Review and evaluate submitted ideas</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">Evaluation Queue</h1>
+          <p className="text-gray-600">Ideas in progress for admin, your submitted ideas for users</p>
+        </div>
 
-      {/* Status Filters */}
-      <div className="mb-6 flex gap-2">
-        {(['all', 'SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'] as FilterStatus[]).map(
-          (filter) => (
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-red-700">{error}</p>
+            </div>
             <button
-              key={filter}
-              onClick={() => setStatusFilter(filter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === filter
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              onClick={handleRetry}
+              className="px-4 py-2 bg-red-600 text-white rounded font-semibold hover:bg-red-700 transition-colors"
             >
-              {filter === 'all' ? 'All' : filter.replace(/_/g, ' ')}
+              Retry
             </button>
-          )
-        )}
-      </div>
-
-      {/* Bulk Actions Bar */}
-      {selectedIds.size > 0 && (
-        <BulkActionsBar
-          selectedCount={selectedIds.size}
-          selectedIds={Array.from(selectedIds)}
-          totalCount={filteredIdeas.length}
-          onSelectAll={toggleSelectAll}
-          onBulkStatusUpdate={() => {/* TODO: Implement bulk status update */}}
-          onBulkAssign={() => {/* TODO: Implement bulk assign */}}
-          onExportCSV={() => {/* TODO: Implement CSV export */}}
-        />
-      )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div data-testid="loading-skeleton" className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          <p className="font-medium">{error}</p>
-          <button
-            onClick={() => fetchQueue(page)}
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && !error && filteredIdeas.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No ideas pending evaluation</p>
-        </div>
-      )}
-
-      {/* Ideas Table */}
-      {!isLoading && !error && filteredIdeas.length > 0 && (
-        <>
-          <div className="overflow-x-auto bg-white rounded-lg border border-gray-200">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === filteredIdeas.length && filteredIdeas.length > 0}
-                      onChange={(e) => toggleSelectAll(e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Submitter</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Attachments</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredIdeas.map((idea) => (
-                  <React.Fragment key={idea.id}>
-                    <tr data-testid="queue-row" className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(idea.id)}
-                          onChange={() => toggleSelection(idea.id)}
-                          className="w-4 h-4"
-                        />
-                      </td>
-                      <EvaluationQueueRow
-                        idea={idea}
-                        onOpenModal={(ideaId) => {
-                          setSelectedIdea(ideas.find(i => i.id === ideaId));
-                          setIsModalOpen(true);
-                        }}
-                      />
-                    </tr>
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
           </div>
+        )}
+
+        {/* Queue Table */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-6">
+            <QueueTable 
+              ideas={ideas}
+              isLoading={isLoading}
+              onRowClick={(ideaId) => {
+                const idea = ideas.find(i => i.id === ideaId);
+                if (idea) {
+                  setSelectedIdea(idea);
+                  setIsModalOpen(true);
+                }
+              }}
+            />
+          </div>
+        {/* Evaluation Modal */}
+        {isModalOpen && selectedIdea && (
+          <EvaluationModal
+            idea={selectedIdea}
+            isOpen={isModalOpen}
+            isLoading={isSubmitting}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedIdea(null);
+            }}
+            onSubmit={async (status, comments, fileUrl) => {
+              setIsSubmitting(true);
+              try {
+                await fetch(`http://localhost:3001/api/ideas/${selectedIdea.id}/evaluate`, {
+                  method: 'POST',
+                  body: JSON.stringify({ status, comments, fileUrl }),
+                  headers: { 'Content-Type': 'application/json', Authorization: firebaseUser ? `Bearer ${firebaseUser.accessToken || ''}` : '' },
+                });
+                setIsModalOpen(false);
+                setSelectedIdea(null);
+                // Refresh queue
+                fetchQueue(pagination.page, pagination.pageSize);
+              } catch (err) {
+                alert('Failed to submit evaluation: ' + (err.message || err));
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+          />
+        )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-between items-center">
-              <button
-                onClick={() => fetchQueue(page - 1)}
-                disabled={page === 1}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-
-              <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-
-              <button
-                onClick={() => fetchQueue(page + 1)}
-                disabled={page === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+          {!error && (
+            <QueuePagination
+              currentPage={pagination.page}
+              pageSize={pagination.pageSize}
+              totalCount={pagination.total}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           )}
-        </>
-      )}
+        </div>
 
-      {/* Evaluation Modal */}
-      {selectedIdea && (
-        <EvaluationModal
-          idea={selectedIdea}
-          isOpen={isModalOpen}
-          isLoading={isSubmitting}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleEvaluationSubmit}
-        />
-      )}
+        {/* Info Text */}
+        {!isLoading && ideas.length > 0 && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              💡 Admin sees in-progress ideas. Users see their own submissions. Click on any idea title to view details and provide feedback.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

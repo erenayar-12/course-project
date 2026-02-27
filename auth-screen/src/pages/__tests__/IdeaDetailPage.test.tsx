@@ -22,9 +22,9 @@ describe('IdeaDetailPage', () => {
     title: 'Test Idea',
     description: 'Test description',
     category: 'Technology',
-    status: 'APPROVED' as const,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    status: 'Accepted' as const,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
     userId: 'user123',
     user: {
       id: 'user123',
@@ -36,7 +36,7 @@ describe('IdeaDetailPage', () => {
         id: 'att1',
         originalName: 'document.pdf',
         fileSize: 1024000,
-        uploadedAt: new Date('2024-01-01'),
+        uploadedAt: '2024-01-01T00:00:00Z',
         fileUrl: 'https://example.com/file.pdf',
       },
     ],
@@ -45,12 +45,12 @@ describe('IdeaDetailPage', () => {
 
   const mockRejectedIdea = {
     ...mockIdea,
-    status: 'REJECTED' as const,
+    status: 'Rejected' as const,
     evaluatorFeedback: {
       evaluatorId: 'eval123',
       evaluatorName: 'John Evaluator',
       comments: 'Please revise the idea.',
-      feedbackDate: new Date('2024-01-02'),
+      feedbackDate: '2024-01-02T00:00:00Z',
     },
   };
 
@@ -116,7 +116,7 @@ describe('IdeaDetailPage', () => {
     });
 
     it('should display Edit button for PENDING ideas', async () => {
-      const pendingIdea = { ...mockIdea, status: 'SUBMITTED' as const };
+      const pendingIdea = { ...mockIdea, status: 'Submitted' as const };
       (mockIdeaService.getIdeaDetail as jest.Mock).mockResolvedValueOnce(pendingIdea);
 
       renderWithRouter(<IdeaDetailPage />);
@@ -137,7 +137,7 @@ describe('IdeaDetailPage', () => {
     });
 
     it('should navigate to edit page when Edit button is clicked', async () => {
-      const pendingIdea = { ...mockIdea, status: 'SUBMITTED' as const };
+      const pendingIdea = { ...mockIdea, status: 'Submitted' as const };
       (mockIdeaService.getIdeaDetail as jest.Mock).mockResolvedValueOnce(pendingIdea);
 
       renderWithRouter(<IdeaDetailPage />);
