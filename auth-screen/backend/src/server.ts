@@ -1,8 +1,10 @@
+// import { authMiddleware } from './middleware/auth.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
+import { auth0Jwt } from './middleware/auth0Jwt.js';
 import ideasRouter from './routes/ideas.js';
 import authRouter from './routes/auth.js';
 import evaluationsRouter from './routes/evaluations.js';
@@ -18,6 +20,9 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
+
+// Auth0 JWT middleware for all /api routes
+// Firebase Auth middleware is applied in each router where needed
 
 // Routes
 app.get('/health', (req, res) => {

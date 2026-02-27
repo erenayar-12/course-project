@@ -81,7 +81,7 @@ const EvaluationQueue: React.FC = () => {
 
   // Handle modal submission
   const handleEvaluationSubmit = async (
-    status: EvaluationStatus,
+    status: 'accepted' | 'rejected' | 'needs_revision',
     comments: string,
     fileUrl?: string
   ) => {

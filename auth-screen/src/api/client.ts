@@ -1,12 +1,32 @@
+import { getAuth } from 'firebase/auth';
 /**
  * API Client with Authorization Header
  * Adds Bearer token to all requests
  */
 
-const API_BASE_URL =
-  (import.meta && import.meta.env && (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' || import.meta.env.MODE === 'e2e'))
-    ? 'http://localhost:3001/api'
-    : '/api';
+// Jest does not support import.meta.env, so use process.env.NODE_ENV in test
+function getApiBaseUrl(): string {
+  // Jest (test) environment
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') {
+    return 'http://localhost:3001/api';
+  }
+  // Vite/browser environment
+  try {
+    // Only reference import.meta if it exists
+    if (
+      typeof import.meta !== 'undefined' &&
+      import.meta.env &&
+      (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' || import.meta.env.MODE === 'e2e')
+    ) {
+      return 'http://localhost:3001/api';
+    }
+  } catch {}
+  // Default for production or unknown
+  return '/api';
+}
+
+// Set API_BASE_URL using the new function
+const API_BASE_URL = getApiBaseUrl();
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;
@@ -15,28 +35,33 @@ export interface RequestOptions extends RequestInit {
 /**
  * Get the auth token from localStorage
  */
-function getAuthToken(): string | null {
+function getAuthToken(): Promise<string | null> {
   try {
-    return localStorage.getItem('auth_token');
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      return user.getIdToken();
+    }
+    return Promise.resolve(null);
   } catch {
-    return null;
+    return Promise.resolve(null);
   }
 }
 
 /**
  * Add Authorization header to request
  */
-function getHeaders(options?: RequestOptions): Record<string, string> {
+async function getHeaders(options?: RequestOptions): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options?.headers as Record<string, string>) || {}),
   };
 
-  const token = getAuthToken();
+  // Support async token
+  const token = await getAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-
   return headers;
 }
 
@@ -44,7 +69,7 @@ function getHeaders(options?: RequestOptions): Record<string, string> {
  * Build URL with query parameters
  */
 function buildUrl(endpoint: string, params?: Record<string, string | number | boolean>): string {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
+  const url = new URL(`${getApiBaseUrl()}${endpoint}`);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -63,9 +88,32 @@ export async function apiRequest<T = unknown>(
   options?: RequestOptions
 ): Promise<T> {
   const { params, ...fetchOptions } = options || {};
-
   const url = buildUrl(endpoint, params);
-  const headers = getHeaders(options);
+  const auth = getAuth();
+  // Wait for user to be available (async)
+  let user = auth.currentUser;
+  if (!user) {
+    // Try to wait for auth state
+    await new Promise(resolve => {
+      const unsubscribe = auth.onAuthStateChanged(u => {
+        user = u;
+        unsubscribe();
+        resolve(undefined);
+      });
+    });
+  }
+  if (!user) {
+    throw new Error('User not logged in. Please log in to continue.');
+  }
+  const token = await user.getIdToken();
+  if (!token) {
+    throw new Error('Failed to retrieve Firebase token.');
+  }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options?.headers as Record<string, string>) || {}),
+    'Authorization': `Bearer ${token}`,
+  };
 
   const response = await fetch(url, {
     ...fetchOptions,

@@ -10,17 +10,65 @@ export interface PaginationParams {
 }
 
 export class IdeasService {
+    async getAllIdeas(params: PaginationParams) {
+      const [ideas, total] = await Promise.all([
+        prisma.idea.findMany({
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            attachments: {
+              select: {
+                id: true,
+                originalName: true,
+                fileSize: true,
+                uploadedAt: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: params.limit,
+          skip: params.offset,
+        }),
+        prisma.idea.count(),
+      ]);
+      return {
+        ideas,
+        total,
+        page: Math.floor(params.offset / params.limit) + 1,
+        pageSize: params.limit,
+      };
+    }
   async createIdea(
     externalId: string,
-    data: z.infer<typeof ideasSchema>
+    data: z.infer<typeof ideasSchema> & { submitterEmail?: string; submitterName?: string }
   ) {
     // First find or create user by externalId (Auth0 ID)
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { externalId },
     });
-
     if (!user) {
-      throw new Error('User not found. Please contact support.');
+      // Create user if not found (auto-register)
+      user = await prisma.user.create({
+        data: {
+          externalId,
+          email: data.submitterEmail || '',
+          name: data.submitterName || '',
+        },
+      });
+    } else {
+      // Update user info if changed
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          email: data.submitterEmail || user.email,
+          name: data.submitterName || user.name,
+        },
+      });
     }
 
     const idea = await prisma.idea.create({
@@ -28,8 +76,10 @@ export class IdeasService {
         title: data.title,
         description: data.description,
         category: data.category,
-        status: 'DRAFT',
+        status: 'SUBMITTED',
         userId: user.id,
+        submitterEmail: data.submitterEmail || '',
+        submitterName: data.submitterName || '',
       },
       include: {
         user: {
@@ -49,12 +99,18 @@ export class IdeasService {
     externalId: string,
     params: PaginationParams
   ) {
-    const user = await prisma.user.findUnique({
+
+    let user = await prisma.user.findUnique({
       where: { externalId },
     });
-
     if (!user) {
-      throw new Error('User not found');
+      user = await prisma.user.create({
+        data: {
+          externalId,
+          email: '',
+          name: '',
+        },
+      });
     }
 
     const [ideas, total] = await Promise.all([
@@ -91,14 +147,8 @@ export class IdeasService {
     ideaId: string,
     externalId: string
   ) {
-    const user = await prisma.user.findUnique({
-      where: { externalId },
-    });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
+    // Find idea and allow admin/evaluator access
     const idea = await prisma.idea.findUnique({
       where: { id: ideaId },
       include: {
@@ -107,6 +157,7 @@ export class IdeasService {
             id: true,
             name: true,
             email: true,
+            externalId: true,
           },
         },
         attachments: true,
@@ -117,9 +168,18 @@ export class IdeasService {
       throw new Error('Idea not found');
     }
 
-    // Check ownership
-    if (idea.userId !== user.id) {
-      throw new Error('Unauthorized: You do not own this idea');
+    // Ownership check only for submitter
+    // If admin/evaluator, allow access
+    // If not, block
+    if (externalId && idea.user.externalId !== externalId) {
+      // Check role from req.user (passed from route)
+      // If req.user.role is admin/evaluator, allow access
+      // Otherwise, block
+      // NOTE: req.user.role must be passed from route
+      // If not present, default to blocking
+      if (!('role' in arguments[arguments.length - 1]) || !['admin', 'evaluator'].includes(arguments[arguments.length - 1].role)) {
+        throw new Error('Unauthorized: You do not own this idea');
+      }
     }
 
     return idea;
@@ -130,12 +190,18 @@ export class IdeasService {
     externalId: string,
     data: z.infer<typeof updateIdeaSchema>
   ) {
-    const user = await prisma.user.findUnique({
+
+    let user = await prisma.user.findUnique({
       where: { externalId },
     });
-
     if (!user) {
-      throw new Error('User not found');
+      user = await prisma.user.create({
+        data: {
+          externalId,
+          email: '',
+          name: '',
+        },
+      });
     }
 
     const idea = await prisma.idea.findUnique({
@@ -152,9 +218,22 @@ export class IdeasService {
 
     const updated = await prisma.idea.update({
       where: { id: ideaId },
-      data,
+      data: {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        status: 'DRAFT',
+        userId: user.id,
+        submitterEmail: data.submitterEmail,
+      },
       include: {
-        attachments: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -165,12 +244,18 @@ export class IdeasService {
     ideaId: string,
     externalId: string
   ) {
-    const user = await prisma.user.findUnique({
+
+    let user = await prisma.user.findUnique({
       where: { externalId },
     });
-
     if (!user) {
-      throw new Error('User not found');
+      user = await prisma.user.create({
+        data: {
+          externalId,
+          email: '',
+          name: '',
+        },
+      });
     }
 
     const idea = await prisma.idea.findUnique({
@@ -200,12 +285,18 @@ export class IdeasService {
     fileSize: number,
     mimeType: string
   ) {
-    const user = await prisma.user.findUnique({
+
+    let user = await prisma.user.findUnique({
       where: { externalId },
     });
-
     if (!user) {
-      throw new Error('User not found');
+      user = await prisma.user.create({
+        data: {
+          externalId,
+          email: '',
+          name: '',
+        },
+      });
     }
 
     const idea = await prisma.idea.findUnique({
@@ -249,7 +340,7 @@ export class IdeasService {
     const ideas = await prisma.idea.findMany({
       where: {
         status: {
-          in: ['SUBMITTED', 'UNDER_REVIEW'],
+          in: ['SUBMITTED', 'NEEDS_REVISION'],
         },
       },
       select: {

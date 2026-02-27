@@ -14,7 +14,7 @@
 
 import request from 'supertest';
 import { PrismaClient } from '@prisma/client';
-import app from '../../server'; // Adjust path based on actual structure
+import { app } from '../../server';
 import { createTestUser, createTestIdea, cleanupDatabase } from './test-helpers';
 
 const prisma = new PrismaClient();
@@ -63,7 +63,7 @@ describe('GET /api/ideas - Filtering & Sorting', () => {
   });
 
   afterAll(async () => {
-    await cleanupDatabase(prisma, userId);
+    await cleanupDatabase(prisma);
     await prisma.$disconnect();
   });
 

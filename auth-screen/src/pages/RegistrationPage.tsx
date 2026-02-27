@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useMockAuth0 } from '../context/MockAuth0Context';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebaseConfig';
+import { setUserRole } from '../firebaseRoleUtils';
 
 /**
  * RegistrationPage Component
@@ -25,13 +28,14 @@ interface RegistrationFormData {
 }
 
 const RegistrationPage: React.FC = () => {
-  const { loginWithRedirect, isLoading, error } = useMockAuth0();
+    const navigate = useNavigate();
   const [formData, setFormData] = useState<RegistrationFormData>({
     email: '',
     password: '',
     confirmPassword: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { id, value } = e.currentTarget;
@@ -44,39 +48,39 @@ const RegistrationPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-
+    setIsLoading(true);
+    setLocalError(null);
     // Validation
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       setLocalError('Please fill in all fields.');
+      setIsLoading(false);
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setLocalError('Passwords do not match. Please try again.');
+      setIsLoading(false);
       return;
     }
-
     if (formData.password.length < 8) {
       setLocalError('Password must be at least 8 characters long.');
+      setIsLoading(false);
       return;
     }
-
     try {
-      // Send signup request to Auth0 (AC 3)
-      await loginWithRedirect({
-        authorizationParams: {
-          screen_hint: 'signup',
-          login_hint: formData.email,
-        },
-      });
-    } catch (err) {
-      // Generic error message for security
-      setLocalError('Registration failed. Please try again.');
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      // Assign role: admin@admin.com is admin, others are user
+      const role = formData.email === 'admin@admin.com' ? 'admin' : 'user';
+      await setUserRole(userCredential.user.uid, role);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setLocalError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const displayError =
-    error || localError ? (error ? 'Registration failed. Please try again.' : localError) : null;
+    localError ? localError : null;
   return (
     <main className="responsive min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">

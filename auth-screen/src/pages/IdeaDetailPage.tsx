@@ -51,6 +51,8 @@ interface ApiError {
  * AC12: Responsive design (mobile/tablet/desktop)
  */
 const IdeaDetailPage: React.FC = () => {
+    const [comments, setComments] = useState<any[]>([]);
+    const [commentsLoading, setCommentsLoading] = useState(true);
   const { ideaId } = useParams<{ ideaId: string }>();
   const navigate = useNavigate();
   const [idea, setIdea] = useState<IdeaDetail | null>(null);
@@ -62,6 +64,20 @@ const IdeaDetailPage: React.FC = () => {
 
   // Load idea data on mount
   useEffect(() => {
+        // Load comments for this idea
+        const loadComments = async () => {
+          setCommentsLoading(true);
+          try {
+            const res = await fetch(`/api/ideas/${ideaId}/comments`, { credentials: 'include' });
+            const json = await res.json();
+            if (json.success) setComments(json.data);
+          } catch (e) {
+            setComments([]);
+          } finally {
+            setCommentsLoading(false);
+          }
+        };
+        if (ideaId) loadComments();
     const loadIdea = async () => {
       if (!ideaId) {
         setError('Idea ID is required');
@@ -343,13 +359,27 @@ const IdeaDetailPage: React.FC = () => {
             )}
 
             {idea.status === 'Submitted' && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
-                aria-label="Delete idea"
-              >
-                Delete
-              </button>
+              <>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
+                  aria-label="Delete idea"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => {
+                    // In production, call withdraw API here
+                    alert('Idea withdrawn (demo only).');
+                    navigate('/my-ideas');
+                  }}
+                  className="px-3 sm:px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm font-medium active:opacity-80 min-h-10 min-w-10 flex items-center justify-center"
+                  aria-label="Withdraw idea"
+                  style={{ marginLeft: 8 }}
+                >
+                  Withdraw
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -401,15 +431,24 @@ const IdeaDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Rejection feedback (if rejected) */}
-          {idea.status === 'Rejected' && idea.evaluatorFeedback && (
-            <div className="mb-6 sm:mb-8">
-              <RejectionFeedbackSection 
-                feedback={idea.evaluatorFeedback}
-                ideaId={idea.id}
-              />
-            </div>
-          )}
+          {/* Comments Section */}
+          <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Comments</h2>
+            {commentsLoading ? (
+              <div className="text-gray-500 text-sm">Loading comments...</div>
+            ) : comments.length === 0 ? (
+              <div className="text-gray-500 text-sm">No comments yet.</div>
+            ) : (
+              <ul className="space-y-3">
+                {comments.map((c) => (
+                  <li key={c.id} className="bg-gray-100 rounded p-3">
+                    <div className="text-gray-900 text-sm font-medium">{c.author?.name || 'Unknown'} <span className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleString()}</span></div>
+                    <div className="text-gray-700 text-sm mt-1">{c.text}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 

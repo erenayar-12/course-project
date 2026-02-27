@@ -9,10 +9,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useMockAuth0 } from '../context/MockAuth0Context';
+import { auth } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import { apiGet } from '../api/client';
 import { QueueTable } from '../components/QueueTable';
 import { QueuePagination } from '../components/QueuePagination';
+import EvaluationModal from '../components/EvaluationModal';
 import { QueueIdea, EvaluationQueueResponse } from '../types/ideaSchema';
 import { ROLES } from '../constants/roles';
 
@@ -28,11 +30,35 @@ interface PaginationState {
  * Features: Pagination with localStorage persistence, error recovery, scroll restoration
  */
 const EvaluationQueue: React.FC = () => {
-  const { user } = useMockAuth0();
+    // Modal state
+    const [selectedIdea, setSelectedIdea] = useState<QueueIdea | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [ideas, setIdeas] = useState<QueueIdea[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ page: 1, pageSize: 25, total: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Firebase Auth state
+  const [authLoading, setAuthLoading] = useState(true);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // ...existing code...
+  // Authentication check (not inside any hook or conditional)
+  let authContent = null;
+  if (authLoading) {
+    authContent = <div>Loading...</div>;
+  } else if (!firebaseUser) {
+    window.location.href = '/login';
+    authContent = null;
+  }
 
   // Load pagination state from localStorage
   useEffect(() => {
@@ -57,16 +83,24 @@ const EvaluationQueue: React.FC = () => {
     setError(null);
 
     try {
-      const response = await apiGet<EvaluationQueueResponse>('/evaluation-queue', {
-        params: { page, limit: pageSize },
+      // Ensure pageSize is always a valid number
+      const validPageSize = typeof pageSize === 'number' && !isNaN(pageSize) ? pageSize : 25;
+      const result = await apiGet<EvaluationQueueResponse>('/ideas', {
+        params: { page, limit: validPageSize },
+        headers: { Authorization: firebaseUser ? `Bearer ${firebaseUser.accessToken || ''}` : '' },
       });
 
-      if (response.success && response.data) {
-        setIdeas(response.data);
+      if (result.success && result.data) {
+        console.log('EvaluationQueue fetched ideas:', result.data);
+        // Show only open statuses in queue
+        const queueIdeas = (result.data || []).filter(
+          (idea) => ['SUBMITTED', 'UNDER_REVIEW', 'NEEDS_REVISION'].includes(idea.status)
+        );
+        setIdeas(queueIdeas);
         setPagination({
-          page: response.pagination.page,
-          pageSize: response.pagination.limit,
-          total: response.pagination.total,
+          page: result.pagination.page,
+          pageSize: result.pagination.limit,
+          total: result.pagination.total,
         });
       }
     } catch (err: any) {
@@ -79,37 +113,45 @@ const EvaluationQueue: React.FC = () => {
 
   // Initial fetch
   useEffect(() => {
-    if (user) {
+    if (firebaseUser) {
       fetchQueue(pagination.page, pagination.pageSize);
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUser]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
     // Save scroll position for restoration after navigation
     sessionStorage.setItem('evaluationQueue_scrollPos', String(window.scrollY));
-    setPagination(prev => ({ ...prev, page: newPage }));
-    fetchQueue(newPage, pagination.pageSize);
+    const pageSize = typeof pagination.pageSize === 'number' && !isNaN(pagination.pageSize) ? pagination.pageSize : 25;
+    setPagination(prev => ({ ...prev, page: newPage, pageSize }));
+    fetchQueue(newPage, pageSize);
   };
 
   // Handle page size change
   const handlePageSizeChange = (newPageSize: number) => {
-    setPagination(prev => ({ ...prev, pageSize: newPageSize, page: 1 }));
-    fetchQueue(1, newPageSize);
+    const pageSize = typeof newPageSize === 'number' && !isNaN(newPageSize) ? newPageSize : 25;
+    setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+    fetchQueue(1, pageSize);
   };
 
   // Handle retry on error
   const handleRetry = () => {
-    fetchQueue(pagination.page, pagination.pageSize);
+    const pageSize = typeof pagination.pageSize === 'number' && !isNaN(pagination.pageSize) ? pagination.pageSize : 25;
+    fetchQueue(pagination.page, pageSize);
   };
+
+  if (authContent !== null) {
+    return authContent;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Evaluation Queue</h1>
-          <p className="text-gray-600">Review ideas submitted by team members</p>
+          <h1 className="text-4xl font-bold mb-2 text-gray-900">Evaluation Queue</h1>
+          <p className="text-gray-600">Ideas in progress for admin, your submitted ideas for users</p>
         </div>
 
         {/* Error Banner */}
@@ -131,10 +173,47 @@ const EvaluationQueue: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="p-6">
             <QueueTable 
-              ideas={ideas} 
+              ideas={ideas}
               isLoading={isLoading}
+              onRowClick={(ideaId) => {
+                const idea = ideas.find(i => i.id === ideaId);
+                if (idea) {
+                  setSelectedIdea(idea);
+                  setIsModalOpen(true);
+                }
+              }}
             />
           </div>
+        {/* Evaluation Modal */}
+        {isModalOpen && selectedIdea && (
+          <EvaluationModal
+            idea={selectedIdea}
+            isOpen={isModalOpen}
+            isLoading={isSubmitting}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedIdea(null);
+            }}
+            onSubmit={async (status, comments, fileUrl) => {
+              setIsSubmitting(true);
+              try {
+                await fetch(`http://localhost:3001/api/ideas/${selectedIdea.id}/evaluate`, {
+                  method: 'POST',
+                  body: JSON.stringify({ status, comments, fileUrl }),
+                  headers: { 'Content-Type': 'application/json', Authorization: firebaseUser ? `Bearer ${firebaseUser.accessToken || ''}` : '' },
+                });
+                setIsModalOpen(false);
+                setSelectedIdea(null);
+                // Refresh queue
+                fetchQueue(pagination.page, pagination.pageSize);
+              } catch (err) {
+                alert('Failed to submit evaluation: ' + (err.message || err));
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+          />
+        )}
 
           {/* Pagination */}
           {!error && (
@@ -152,8 +231,7 @@ const EvaluationQueue: React.FC = () => {
         {!isLoading && ideas.length > 0 && (
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              💡 Ideas are sorted by submission date (oldest first) to ensure fair FIFO processing.
-              Click on any idea title to view details and provide feedback.
+              💡 Admin sees in-progress ideas. Users see their own submissions. Click on any idea title to view details and provide feedback.
             </p>
           </div>
         )}

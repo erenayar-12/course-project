@@ -7,10 +7,10 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useMockAuth0 } from '../context/MockAuth0Context';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useMockAuth0();
+  const { user, logout, isAuthenticated, isLoading } = useAuth0();
 
   return (
     <nav className="bg-indigo-600 text-white shadow-lg">
@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
 
         {/* Navigation Links */}
         <div className="flex items-center gap-6">
-          {user && (
+          {isAuthenticated && user && (
             <>
               {/* Dashboard Link */}
               <Link
@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
               </Link>
 
               {/* Evaluation Queue Link - Only for evaluators and admins */}
-              {(user.role === 'evaluator' || user.role === 'admin') && (
+              {(user["role"] === 'evaluator' || user["role"] === 'admin') && (
                 <Link
                   to="/evaluation-queue"
                   className="hover:text-indigo-200 transition-colors font-semibold"
@@ -45,7 +45,7 @@ const Navbar: React.FC = () => {
               {/* User Info */}
               <div className="text-sm opacity-90">
                 <span className="block">{user.email}</span>
-                <span className="text-xs opacity-75">Role: {user.role}</span>
+                <span className="text-xs opacity-75">Role: {user["role"] || 'submitter'}</span>
               </div>
 
               {/* Logout Button - AC1: User can click logout button */}
@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
             </>
           )}
 
-          {!user && (
+          {!isAuthenticated && (
             <>
               <Link to="/login" className="hover:text-indigo-200 transition-colors font-semibold">
                 Login

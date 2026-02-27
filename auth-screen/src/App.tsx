@@ -9,8 +9,13 @@ import IdeaDetailPage from './pages/IdeaDetailPage';
 import IdeaEditPage from './pages/IdeaEditPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
-import { MockAuth0Provider } from './context/MockAuth0Context';
+// Removed MockAuth0Provider for Auth0 integration
 import { ROLES } from './constants/roles';
+import AdminUsersPage from './pages/AdminUsersPage';
+import AdminSettingsPage from './pages/AdminSettingsPage';
+import SubmitIdeaPage from './pages/SubmitIdeaPage';
+import MyIdeasPage from './pages/MyIdeasPage';
+import IdeasPage from './pages/IdeasPage';
 
 /**
  * App Component
@@ -111,6 +116,46 @@ const AppRoutes: React.FC = () => (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/admin/users"
+      element={
+        <ProtectedRoute path="/admin/users" requiredRoles={[ROLES.ADMIN]}>
+          <AdminUsersPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/settings"
+      element={
+        <ProtectedRoute path="/admin/settings" requiredRoles={[ROLES.ADMIN]}>
+          <AdminSettingsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/submit-idea"
+      element={
+        <ProtectedRoute path="/submit-idea">
+          <SubmitIdeaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my-ideas"
+      element={
+        <ProtectedRoute path="/my-ideas">
+          <MyIdeasPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/ideas"
+      element={
+        <ProtectedRoute path="/ideas" requiredRoles={[ROLES.EVALUATOR, ROLES.ADMIN]}>
+          <IdeasPage />
+        </ProtectedRoute>
+      }
+    />
 
     <Route
       path="/evaluation-queue"
@@ -149,7 +194,7 @@ const AppRoutes: React.FC = () => (
     />
 
     {/* Default redirect */}
-    <Route path="/" element={<Navigate to="/login" replace />} />
+    <Route path="/" element={<Navigate to="/dashboard" replace />} />
   </Routes>
 );
 
@@ -158,9 +203,26 @@ const AppRoutes: React.FC = () => (
  * Inner component that uses session timeout hook
  * Requires MockAuth0Context (provided by MockAuth0Provider parent)
  */
+import { auth } from './firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 const AppContent: React.FC = () => {
-  // eslint-disable-next-line no-console
-  console.log('✓ AppContent rendering');
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [user, setUser] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setIsAuthenticated(!!firebaseUser);
+      setUser(firebaseUser);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Debug output
+  console.log('AppContent Firebase debug: isAuthenticated:', isAuthenticated);
+  console.log('AppContent Firebase debug: user:', user);
+  console.log('AppContent Firebase debug: isLoading:', isLoading);
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -187,9 +249,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <MockAuth0Provider>
-        <AppContent />
-      </MockAuth0Provider>
+      <AppContent />
     </ErrorBoundary>
   );
 };

@@ -1,3 +1,20 @@
+// STORY-3.5: Audit Logging for status changes
+model StatusChangeLog {
+  id            String   @id @default(cuid())
+  ideaId        String
+  idea          Idea     @relation("IdeaStatusChangeLogs", fields: [ideaId], references: [id], onDelete: Cascade)
+  oldStatus     String
+  newStatus     String
+  evaluatorId   String
+  evaluator     User     @relation("UserStatusChangeLogs", fields: [evaluatorId], references: [id], onDelete: Restrict)
+  evaluatorName String
+  timestamp     DateTime @default(now())
+  feedback      String?
+
+  @@index([ideaId])
+  @@index([evaluatorId])
+  @@index([timestamp])
+}
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -23,6 +40,8 @@ model User {
   ideas       Idea[]
   attachments IdeaAttachment[] @relation("uploadedBy")
   evaluations IdeationEvaluation[] // STORY-2.3b: evaluator's evaluations
+  statusChangeLogs StatusChangeLog[] @relation("UserStatusChangeLogs")
+  comments Comment[] // Relation for authored comments
 }
 
 model Idea {
@@ -30,19 +49,37 @@ model Idea {
   title       String   @db.VarChar(100)
   description String
   category    String   // PRODUCT, PROCESS, MARKETING, OTHER
-  status      String   @default("DRAFT") // DRAFT, SUBMITTED, UNDER_REVIEW, NEEDS_REVISION, APPROVED, REJECTED
+  status      String   @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, NEEDS_REVISION, APPROVED, REJECTED
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submitterEmail String? // NEW FIELD, optional
+  submitterName  String? // NEW FIELD, optional
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   attachments IdeaAttachment[]
   evaluations IdeationEvaluation[] // STORY-2.3b: immutable audit trail
+  statusChangeLogs StatusChangeLog[] @relation("IdeaStatusChangeLogs")
+  comments Comment[]
 
   @@index([userId])
   @@index([status])
   @@index([category])
   @@index([status, createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  ideaId    String
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  text      String   @db.VarChar(500)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ideaId])
+  @@index([authorId])
 }
 
 model IdeaAttachment {

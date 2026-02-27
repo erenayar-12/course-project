@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
-import { useMockAuth0 } from '../context/MockAuth0Context';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebaseConfig';
 
 /**
  * LoginPage Component - Simplified Version
@@ -13,13 +15,15 @@ interface LoginFormData {
   password: string;
 }
 
+
 const LoginPage: React.FC = () => {
-  const { loginWithRedirect, isLoading, error } = useMockAuth0();
+    const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
   });
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { id, value } = e.currentTarget;
@@ -32,24 +36,24 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-
+    setIsLoading(true);
+    setLocalError(null);
     if (!formData.email || !formData.password) {
       setLocalError('Please enter both email and password.');
+      setIsLoading(false);
       return;
     }
-
     try {
-      await loginWithRedirect({
-        authorizationParams: {
-          login_hint: formData.email,
-        },
-      });
-    } catch (err) {
-      setLocalError('Invalid email or password. Please try again.');
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setLocalError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const displayError = error || localError ? 'Invalid email or password. Please try again.' : null;
+  const displayError = localError ? localError : null;
 
   return (
     <main style={{minHeight: '100vh', background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'}}>

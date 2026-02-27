@@ -77,21 +77,19 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             <th className="text-left px-6 py-3 font-semibold text-gray-700">Submitted</th>
             <th className="text-left px-6 py-3 font-semibold text-gray-700">Status</th>
             <th className="text-left px-6 py-3 font-semibold text-gray-700">Days in Queue</th>
+            <th className="text-left px-6 py-3 font-semibold text-gray-700">Action</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
-            // Show skeleton loaders while loading
             Array.from({ length: 5 }).map((_, idx) => (
               <SkeletonRow key={idx} />
             ))
           ) : (
-            // Show idea rows
             ideas.map((idea) => (
               <tr
                 key={idea.id}
-                onClick={() => handleRowClick(idea.id)}
-                className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors"
+                className="border-b border-gray-200 hover:bg-blue-50 transition-colors"
               >
                 <td className="px-6 py-4 font-medium text-indigo-600 hover:underline max-w-xs truncate">
                   {idea.title}
@@ -116,6 +114,14 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                 </td>
                 <td className="px-6 py-4 text-gray-700 font-semibold">
                   {idea.daysInQueue === 1 ? '1 day' : `${idea.daysInQueue} days`}
+                </td>
+                <td className="px-6 py-4">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                    onClick={() => onRowClick && onRowClick(idea.id)}
+                  >
+                    Review
+                  </button>
                 </td>
               </tr>
             ))

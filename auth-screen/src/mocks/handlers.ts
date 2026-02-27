@@ -1,6 +1,6 @@
 // src/mocks/handlers.ts
 
-import { rest } from 'msw';
+import { http as rest } from 'msw';
 
 export const handlers = [
   // Mock login endpoint for Cypress E2E
